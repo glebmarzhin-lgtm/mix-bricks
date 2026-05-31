@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mix Bricks</title>
+<style>
+  :root{
+    --bg0:#23262d; --bg1:#2b2f37; --panel:#2f333b; --panel2:#393e48;
+    --ink:#e9edf3; --ink-dim:#9aa3b2; --frame:#171a20; --frame2:#454b57;
+    --gold:#e6b455; --gold-d:#b88a32; --green:#7bb78f; --green-d:#4f8062;
+    --red:#d9707c; --cell:#272b33; --cell2:#31363f;
+    --hl:#8597ad;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(circle at 50% -8%, #333945 0%, var(--bg0) 62%),
+      var(--bg0);
+    color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-weight:600;
+    letter-spacing:.2px;
+    -webkit-font-smoothing:antialiased;
+    display:flex; justify-content:center;
+    min-height:100%;
+    overflow-x:hidden;
+    user-select:none;
+  }
+  #game{
+    width:100%; max-width:440px;
+    padding:10px 10px 24px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+
+  /* ---- pixel frame helper ---- */
+  .pix{
+    border:3px solid var(--frame);
+    box-shadow:
+      inset 0 0 0 3px var(--frame2),
+      0 4px 0 0 #05030a,
+      0 4px 0 3px var(--frame);
+    background:var(--panel);
+  }
+
+  /* ---------- TOP BAR ---------- */
+  #topbar{display:flex; flex-direction:column; gap:8px;}
+  #title{
+    text-align:center; font-size:26px; line-height:1; letter-spacing:2px;
+    color:var(--gold);
+    text-shadow:0 2px 0 var(--gold-d), 0 4px 0 #5a3d00, 3px 3px 0 #00000080;
+    padding:4px 0 2px;
+  }
+  #title small{display:block; font-size:10px; color:var(--ink-dim); letter-spacing:4px; text-shadow:none; margin-top:3px;}
+  #statRow{display:flex; gap:8px; align-items:stretch;}
+  #coins{
+    flex:0 0 auto; display:flex; align-items:center; gap:7px;
+    padding:8px 12px; font-size:18px; color:var(--gold);
+  }
+  #coins .coinIcon{width:18px; height:18px; image-rendering:pixelated;}
+  #progressWrap{flex:1; padding:6px 8px; display:flex; flex-direction:column; justify-content:center; gap:4px;}
+  #progressLabel{font-size:9px; color:var(--ink-dim); display:flex; justify-content:space-between; letter-spacing:1px;}
+  #progressTrack{
+    height:14px; background:#0b0814; border:2px solid var(--frame2);
+    position:relative; overflow:hidden;
+  }
+  #progressBar{
+    height:100%; width:0%;
+    background:repeating-linear-gradient(45deg,var(--hl) 0 6px,#a6b6c8 6px 12px);
+    transition:width .35s cubic-bezier(.3,1.2,.5,1);
+  }
+
+  /* ---------- MERGE PANEL ---------- */
+  #mergePanel{padding:10px;}
+  #mergeGrid{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
+  }
+  .slot{
+    position:relative; aspect-ratio:1/1;
+    background:
+      linear-gradient(135deg,var(--cell2),var(--cell));
+    border:2px solid #14161b;
+    box-shadow:inset 0 0 0 2px #3a414c, inset 0 4px 6px #00000050;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+  }
+  .slot.hoverdrop{box-shadow:inset 0 0 0 2px var(--gold), 0 0 10px var(--gold);}
+  .slot.mergeable{box-shadow:inset 0 0 0 2px var(--green), 0 0 12px var(--green);}
+  .pick{
+    position:absolute; width:84%; height:84%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:grab; touch-action:none;
+    transition:transform .12s ease;
+    z-index:2;
+  }
+  .pick img{width:100%; height:100%; image-rendering:pixelated; pointer-events:none;
+    filter:drop-shadow(0 3px 2px #00000080);}
+  .pick .lv{
+    position:absolute; bottom:-2px; right:-2px;
+    font-size:11px; color:#fff; background:#000a; border:1px solid #fff6;
+    padding:0 3px; line-height:14px; min-width:14px; text-align:center;
+  }
+  .pick.dragging{z-index:50; cursor:grabbing; transform:scale(1.12);}
+  .pick.spawn{animation:pop .28s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes pop{0%{transform:scale(0) rotate(-25deg);}100%{transform:scale(1) rotate(0);}}
+  .pick.merging{animation:mergePulse .3s ease;}
+  @keyframes mergePulse{0%{transform:scale(1);}50%{transform:scale(1.35);}100%{transform:scale(1);}}
+
+  /* pick dragged out of the field: 3s countdown, then deleted */
+  .trashPick{
+    position:fixed; z-index:120; width:62px; height:62px; margin:-31px 0 0 -31px;
+    pointer-events:auto; cursor:pointer; touch-action:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .trashPick.saved{animation:trashSave .3s ease forwards;}
+  @keyframes trashSave{from{transform:scale(1);}to{transform:scale(1.25); opacity:0;}}
+  .trashPick img{width:100%; height:100%; image-rendering:pixelated;
+    filter:drop-shadow(0 3px 3px #000a);}
+  .trashPick .ring{position:absolute; inset:-7px; border:3px dashed var(--red);
+    border-radius:50%; opacity:.9; animation:trashSpin 3s linear forwards;}
+  @keyframes trashSpin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+  .trashPick .cnt{
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:5px;
+    font-size:15px; font-weight:800; color:#fff; background:var(--red);
+    border:2px solid #1a0c10; border-radius:8px; padding:0 8px; line-height:1.5;
+    box-shadow:0 2px 0 #0008;
+  }
+  .trashPick.gone{opacity:0; transform:scale(.4) translateY(10px); transition:all .3s ease;}
+
+  /* ---------- CONTROLS ---------- */
+  #controls{display:flex; gap:10px;}
+  .btn{
+    flex:1; padding:13px 6px; font-family:inherit; font-weight:700; font-size:13px;
+    color:#22262e; cursor:pointer; letter-spacing:1px;
+    border:3px solid var(--frame); position:relative; line-height:1.15;
+    text-transform:uppercase; border-radius:16px;
+    box-shadow:0 5px 0 0 #0c0e12; transition:transform .06s, box-shadow .06s;
+  }
+  .btn small{display:block; font-size:10px; opacity:.82; font-weight:700;}
+  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 0 #0c0e12;}
+  .btn.buy{background:linear-gradient(var(--gold),var(--gold-d));}
+  .btn.go{background:linear-gradient(var(--green),var(--green-d)); color:#10241a;}
+  .btn:disabled{filter:grayscale(.55) brightness(.72); cursor:not-allowed; box-shadow:0 5px 0 0 #0c0e12;}
+  .btn:disabled:active{transform:none; box-shadow:0 5px 0 0 #0c0e12;}
+
+  /* ---------- DIG PANEL ---------- */
+  #digPanel{padding:8px; display:flex; flex-direction:column; gap:6px;}
+  #digHud{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; color:var(--ink-dim); padding:0 2px; letter-spacing:1px;
+  }
+  #digHud b{color:var(--ink);}
+  #levelTag{color:var(--gold);}
+  #camera{
+    position:relative; width:100%; height:clamp(300px,52vh,460px); overflow:hidden;
+    background:linear-gradient(#2c333f 0%, #21252c 22%, #14161b 100%);
+    border:3px solid var(--frame); box-shadow:inset 0 0 0 3px var(--frame2);
+  }
+  /* immersive mode: launching dives into a full-screen dig view — only the field shows.
+     the dig panel becomes a fixed overlay so layout/scroll quirks can't leave the
+     merge field peeking. it slides up on enter and back down on exit. */
+  body.digging{overflow:hidden;}
+  body.digging #digPanel{
+    position:fixed; inset:0; margin:0 auto; z-index:90;
+    width:100%; max-width:460px; height:100vh; height:100dvh;
+    border-width:0; box-shadow:none; background:var(--bg0);
+    animation:digEnter .5s cubic-bezier(.25,.8,.3,1);
+  }
+  body.digging #digPanel.leaving{animation:digLeave .4s ease forwards;}
+  body.digging #camera{flex:1 1 auto; height:auto;}
+  @keyframes digEnter{from{transform:translateY(100%);} to{transform:translateY(0);}}
+  @keyframes digLeave{from{transform:translateY(0);} to{transform:translateY(100%);}}
+  #digWorld{
+    position:absolute; left:0; top:0; width:100%;
+    will-change:transform;
+    transition:transform .14s linear;
+  }
+  #skyStrip{
+    position:relative; width:100%; height:46px;
+    background:linear-gradient(#414b5c,#2c333f);
+    display:flex; align-items:flex-end; justify-content:center;
+    border-bottom:3px solid #14161b;
+    overflow:hidden;
+  }
+  #lanes{display:flex; width:100%;}
+  .lane{position:relative; flex:1 1 0; min-width:0; border-right:2px solid #00000040;}
+  .lane:last-child{border-right:none;}
+  .blk{
+    position:relative; width:100%; image-rendering:pixelated;
+    background-size:100% 100%;
+    box-shadow:inset 0 0 0 1px #00000035;
+  }
+  .blk.breaking{animation:shake .12s linear;}
+  @keyframes shake{25%{transform:translateX(-2px);}75%{transform:translateX(2px);}}
+  .blk.broken{visibility:hidden;}
+  .blk .crack{position:absolute; inset:0; background-size:100% 100%; opacity:0; image-rendering:pixelated;}
+  .digger{
+    position:absolute; left:0; width:100%; z-index:6; pointer-events:none;
+  }
+  /* every pick is full size; multiple picks just overlap (fanned via inline left) */
+  .punit{position:absolute; top:0; width:74%; margin-left:-37%;}
+  .punit img{width:100%; display:block; image-rendering:pixelated;
+    transform-origin:50% 50%; filter:drop-shadow(0 2px 2px #000a);}
+  .digger.swing .punit{animation:digjump .42s ease-in-out infinite;}
+  .digger.swing .punit img{animation:digspin .55s linear infinite;}
+  @keyframes digjump{
+    0%   {transform:translateY(2px);}
+    34%  {transform:translateY(-26px);}
+    54%  {transform:translateY(-26px);}
+    100% {transform:translateY(2px);}
+  }
+  @keyframes digspin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+  .punit .qbar{
+    position:absolute; top:-8px; left:13%; width:74%; height:5px;
+    background:#000a; border:1px solid #0008; z-index:2;
+  }
+  .punit .qbar i{display:block; height:100%; width:100%; background:var(--green); transition:width .15s, background .15s;}
+  .punit.dead img{animation:none !important; transform:rotate(82deg); filter:grayscale(1) brightness(.55);}
+  .punit.dead{opacity:.55;}
+  .punit.dead .qbar{display:none;}
+  .digger.won .punit img{animation:none;}
+  .digger.won .punit{animation:wonbob .7s ease-in-out infinite;}
+  @keyframes wonbob{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+  .digger.lead{z-index:8;}
+  .digger.lead::after{
+    content:""; position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:var(--gold);
+    filter:drop-shadow(0 0 3px var(--gold));
+    animation:bob .6s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{margin-top:0;}50%{margin-top:-4px;}}
+  .coinFx{
+    position:absolute; z-index:20; font-size:12px; color:var(--gold);
+    text-shadow:0 1px 0 #000; pointer-events:none;
+    animation:floatUp .8s ease-out forwards;
+  }
+  @keyframes floatUp{0%{opacity:1; transform:translateY(0);}100%{opacity:0; transform:translateY(-28px);}}
+
+  #camOverlay{
+    position:absolute; left:0; bottom:0; width:100%; padding:5px 8px;
+    font-size:10px; color:#fff; background:linear-gradient(transparent,#000a);
+    display:flex; justify-content:space-between; letter-spacing:1px; z-index:15;
+    pointer-events:none;
+  }
+  #digHint{font-size:10px; color:var(--ink-dim); text-align:center; letter-spacing:1px; min-height:13px;}
+
+  /* ---------- TOAST / BANNER ---------- */
+  #toast{
+    position:fixed; left:50%; top:14px; transform:translateX(-50%) translateY(-80px);
+    background:var(--panel2); color:var(--ink); padding:9px 16px;
+    border:3px solid var(--frame); box-shadow:inset 0 0 0 2px var(--frame2),0 4px 0 #05030a;
+    font-size:12px; z-index:200; opacity:0; transition:transform .35s, opacity .35s;
+    max-width:90%; text-align:center;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0); opacity:1;}
+
+  #banner{
+    position:fixed; inset:0; z-index:300; display:none;
+    align-items:center; justify-content:center; background:#14161bcc;
+    backdrop-filter:blur(2px);
+  }
+  #banner.show{display:flex; animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  #bannerBox{
+    width:86%; max-width:340px; padding:22px 18px; text-align:center;
+    background:var(--panel); border:3px solid var(--frame);
+    box-shadow:inset 0 0 0 3px var(--frame2),0 8px 0 #05030a;
+  }
+  #bannerBox h2{font-size:22px; color:var(--gold); letter-spacing:2px;
+    text-shadow:0 2px 0 var(--gold-d),0 4px 0 #5a3d00; margin-bottom:6px;}
+  #bannerBox p{font-size:12px; color:var(--ink-dim); line-height:1.6; margin-bottom:16px;}
+  #bannerBox p b{color:var(--ink);}
+  .giftBig{width:64px; height:64px; image-rendering:pixelated; margin:0 auto 10px; display:block;
+    filter:drop-shadow(0 4px 0 #0008); animation:bob .8s ease-in-out infinite;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="game">
+
+  <div id="topbar">
+    <div id="title">MIX BRICKS</div>
+    <div id="statRow">
+      <div id="coins" class="pix"><img class="coinIcon" id="coinIcon" alt=""><span id="coinVal">10</span></div>
+      <div id="progressWrap" class="pix">
+        <div id="progressLabel"><span id="progressTitle">ДО УР.2</span><span id="progressNum">0 / 50</span></div>
+        <div id="progressTrack"><div id="progressBar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mergePanel" class="pix">
+    <div id="mergeGrid"></div>
+  </div>
+
+  <div id="controls">
+    <button class="btn buy" id="buyBtn">КУПИТЬ</button>
+    <button class="btn go" id="launchBtn">ЗАПУСТИТЬ</button>
+  </div>
+
+  <div id="digPanel" class="pix">
+    <div id="digHud">
+      <span id="levelTag">УРОВЕНЬ 1</span>
+      <span id="digStatus">готово к запуску</span>
+      <span>ГЛУБИНА <b id="depthVal">0</b></span>
+    </div>
+    <div id="camera">
+      <div id="digWorld">
+        <div id="skyStrip"></div>
+        <div id="lanes"></div>
+      </div>
+      <div id="camOverlay"><span id="camFollow">камера: —</span><span id="camDepth"></span></div>
+    </div>
+    <div id="digHint">купи кирки, объедини их и нажми «Запустить»</div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<div id="banner"><div id="bannerBox" class="pix">
+  <img id="bannerGift" class="giftBig" alt="">
+  <h2 id="bannerTitle">УРОВЕНЬ ПРОЙДЕН!</h2>
+  <p id="bannerText"></p>
+  <button class="btn go" id="bannerBtn" style="color:#06210a;">ДАЛЬШЕ</button>
+</div></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+const rndInt = (a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+function cv(px){ const c=document.createElement('canvas'); c.width=c.height=px;
+  const x=c.getContext('2d'); x.imageSmoothingEnabled=false; return {c,x}; }
+
+// render a char-grid sprite to a pixelated dataURL
+function pixMap(rows, pal, scale=4){
+  const S=rows.length; const {c,x}=cv(S*scale);
+  for(let r=0;r<S;r++){ const line=rows[r];
+    for(let q=0;q<line.length;q++){ const ch=line[q]; const col=pal[ch];
+      if(!col) continue; x.fillStyle=col; x.fillRect(q*scale,r*scale,scale,scale);
+    }}
+  return c.toDataURL();
+}
+
+// procedural noisy block tile
+function makeBlockTex(def){
+  const S=16, scale=4; const {c,x}=cv(S*scale);
+  let seed=def.seed||7;
+  const rnd=()=>{ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; };
+  for(let py=0;py<S;py++) for(let px=0;px<S;px++){
+    let idx=Math.floor(rnd()*def.pal.length);
+    if(py===0||px===0) idx=Math.max(0,idx-1);              // top/left highlight
+    if(py>=S-1||px>=S-1) idx=Math.min(def.pal.length-1,idx+1); // bottom/right shade
+    x.fillStyle=def.pal[idx]; x.fillRect(px*scale,py*scale,scale,scale);
+  }
+  // ore / mineral specks
+  if(def.speck){
+    const n=def.speckN||10;
+    for(let i=0;i<n;i++){
+      const sx=1+Math.floor(rnd()*(S-2)), sy=1+Math.floor(rnd()*(S-2));
+      x.fillStyle=def.speck[0]; x.fillRect(sx*scale,sy*scale,scale,scale);
+      if(rnd()>.4){ x.fillStyle=def.speck[1]; x.fillRect((sx+1)*scale,sy*scale,scale,scale); }
+      if(rnd()>.55){ x.fillStyle=def.speck[0]; x.fillRect(sx*scale,(sy+1)*scale,scale,scale); }
+    }
+  }
+  // subtle inner border
+  x.strokeStyle='rgba(0,0,0,.30)'; x.lineWidth=scale;
+  x.strokeRect(scale/2,scale/2,S*scale-scale,S*scale-scale);
+  return c.toDataURL();
+}
+
+function makeCrack(){
+  const S=16, scale=4; const {c,x}=cv(S*scale);
+  x.strokeStyle='rgba(0,0,0,.85)'; x.lineWidth=scale*0.8; x.lineCap='square';
+  const seg=[[8,0,7,5],[7,5,10,8],[10,8,8,13],[8,13,9,16],[7,5,3,7],[10,8,14,9]];
+  seg.forEach(([a,b,d,e])=>{ x.beginPath(); x.moveTo(a*scale,b*scale); x.lineTo(d*scale,e*scale); x.stroke(); });
+  x.strokeStyle='rgba(255,255,255,.18)'; x.lineWidth=scale*0.35;
+  seg.forEach(([a,b,d,e])=>{ x.beginPath(); x.moveTo(a*scale+1,b*scale); x.lineTo(d*scale+1,e*scale); x.stroke(); });
+  return c.toDataURL();
+}
+
+/* =========================================================
+   SOUND  (Web Audio, synthesized — no assets)
+   ========================================================= */
+let actx=null;
+function audioInit(){
+  if(actx){ if(actx.state==='suspended') actx.resume(); return; }
+  try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }
+  catch(e){ actx=null; }
+}
+function tone(freq,dur,type='square',vol=0.2,slideTo=null,delay=0){
+  if(!actx) return;
+  const t0=actx.currentTime+delay;
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t0);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol,t0+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t0); o.stop(t0+dur+0.03);
+}
+function noiseHit(dur=0.07,vol=0.13,delay=0){
+  if(!actx) return;
+  const t0=actx.currentTime+delay;
+  const n=Math.max(1,Math.floor(actx.sampleRate*dur));
+  const buf=actx.createBuffer(1,n,actx.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<n;i++) data[i]=(Math.random()*2-1)*(1-i/n);
+  const src=actx.createBufferSource(); src.buffer=buf;
+  const f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=820; f.Q.value=0.8;
+  const g=actx.createGain(); g.gain.value=vol;
+  src.connect(f); f.connect(g); g.connect(actx.destination);
+  src.start(t0);
+}
+let _lastDig=0;
+function sfxDig(){
+  if(!actx) return;
+  const now=performance.now();
+  if(now-_lastDig<45) return; _lastDig=now;
+  noiseHit(0.06,0.11);
+  tone(170+Math.random()*40,0.05,'square',0.07,110);
+}
+function sfxMerge(){
+  tone(440,0.10,'triangle',0.15,660);
+  tone(660,0.13,'triangle',0.13,900,0.07);
+}
+function sfxBuy(){ tone(320,0.07,'square',0.12,460); }
+function sfxGift(){ tone(784,0.12,'triangle',0.16,1175); tone(1175,0.14,'triangle',0.12,1568,0.06); }
+function sfxComplete(){
+  [523,659,784,1046].forEach((f,i)=>tone(f,0.18,'triangle',0.15,null,i*0.10));
+}
+
+/* =========================================================
+   BLOCK + PICK DEFINITIONS
+   ========================================================= */
+const BLOCKS = {
+  earth: {name:'Земля',   coins:1,  hp:3,  wear:1, seed:11,
+          pal:['#8a6238','#7a5733','#6b4a2b','#5a3d22','#4a3119'], speck:['#4a3119','#3a2614'], speckN:6},
+  stone: {name:'Камень',  coins:2,  hp:9,  wear:2, seed:23,
+          pal:['#9a9aa6','#8a8a95','#75757f','#616169','#4f4f57']},
+  copper:{name:'Медь',    coins:4,  hp:15, wear:3, seed:37,
+          pal:['#8a8a95','#75757f','#616169','#4f4f57'], speck:['#e0883c','#b8621f'], speckN:14},
+  iron:  {name:'Железо',  coins:7,  hp:22, wear:4, seed:51,
+          pal:['#7a7a82','#6a6a72','#56565e','#46464e'], speck:['#ecd6b4','#b89a78'], speckN:13},
+  gold:  {name:'Золото',  coins:12, hp:30, wear:6, seed:67,
+          pal:['#6a6a72','#5a5a62','#4a4a52','#3c3c44'], speck:['#ffd23f','#caa11f'], speckN:16},
+  gem:   {name:'Кристалл',coins:20, hp:42, wear:8, seed:83,
+          pal:['#3a2f52','#2f2744','#262038','#1d182c'], speck:['#54e8ff','#2aa8d8'], speckN:18},
+};
+const BLOCK_ORDER = ['earth','stone','copper','iron','gold','gem'];
+
+// distinct colour per pick level 1..10  [light, mid, dark]  (no pink)
+const METAL = {
+  1:['#e8e8f0','#a8a8b8','#5c5c68'],   // silver
+  2:['#ff8a6a','#e23a1a','#8a1808'],   // red
+  3:['#ffc860','#f09810','#9a5e08'],   // orange
+  4:['#fff080','#e8c818','#8a7008'],   // gold
+  5:['#c8f060','#88c820','#4a7010'],   // lime
+  6:['#70e890','#22c050','#106830'],   // green
+  7:['#70f0e0','#1ec0a8','#0e7060'],   // teal
+  8:['#78d0ff','#22a0e8','#0e6088'],   // cyan
+  9:['#88a0ff','#3850e8','#1c2888'],   // blue
+ 10:['#b89aff','#7038d8','#3a1480'],   // violet
+};
+
+const PICK_ROWS = [
+ ".......MM.......",
+ ".......MM.......",
+ "......MLLM......",
+ ".....MLLLLM.....",
+ "...MMLLLLLLMM...",
+ ".MMLLLLLLLLLLMM.",
+ "MMLLLLLWWLLLLLMM",
+ "MMLLM..WW..MLLMM",
+ "MLLM...WW...MLLM",
+ "MLM....WW....MLM",
+ "MM.....WW.....MM",
+ ".......WW.......",
+ ".......Ww.......",
+ ".......WW.......",
+ ".......Ww.......",
+ ".......WW.......",
+];
+function makePick(lv){
+  const m=METAL[lv];
+  return pixMap(PICK_ROWS, {
+    'L':m[0],'M':m[1],'m':m[2],
+    'W':'#8a5a2c','w':'#6e4420','h':'#532f14',
+  }, 5);
+}
+
+const GIFT_ROWS = [
+ "................",
+ "......yYy.......",
+ ".....yYYYy......",
+ "....y.yYy.y.....",
+ "..RRRRYYRRRR....",
+ "..RrrrYYrrrR....",
+ "..RRRRYYRRRR....",
+ "................",
+ "..GGGGYGGGGG....",
+ "..GggGYGggG.....",
+ "..GggGYGggG.....",
+ "..GggGYGggG.....",
+ "..GggGYGggG.....",
+ "..GGGGYGGGGG....",
+ "..gggggggggg....",
+ "................",
+];
+function makeGift(){
+  return pixMap(GIFT_ROWS, {
+    'R':'#e0464f','r':'#b02832','G':'#ff5d6c','g':'#c0303a',
+    'Y':'#ffd23f','y':'#fff0a0',
+  }, 5);
+}
+
+const COIN_ROWS = [
+ "................",
+ ".....lllll......",
+ "...llLLLLLll....",
+ "..lLLLLLLLDl....",
+ ".lLLLOLLOLLDl...",
+ ".lLLLLLLLLLDl...",
+ ".lLLOLLLLOLDl...",
+ ".lLLLOOOLLLDl...",
+ ".lLLLLLLLLLDl...",
+ ".lLLLLLLLLLDl...",
+ "..lLLLLLLLDl....",
+ "...llDDDDll.....",
+ ".....DDDDD......",
+ "................",
+ "................",
+ "................",
+];
+function makeCoin(){
+  return pixMap(COIN_ROWS, {
+    'l':'#fff0a0','L':'#ffd23f','D':'#caa11f','O':'#a8801a',
+  }, 4);
+}
+
+/* =========================================================
+   TEXTURE CACHE
+   ========================================================= */
+const TEX = { picks:{}, blocks:{}, gift:'', coin:'', crack:'' };
+function buildTextures(){
+  for(let lv=1;lv<=10;lv++) TEX.picks[lv]=makePick(lv);
+  for(const k in BLOCKS) TEX.blocks[k]=makeBlockTex(BLOCKS[k]);
+  TEX.gift=makeGift(); TEX.coin=makeCoin(); TEX.crack=makeCrack();
+}
+
+/* =========================================================
+   GAME STATE
+   ========================================================= */
+const SLOTS = 15;            // 5 x 3 merge field
+const LANES = 5;             // dig lanes = merge columns (always 5)
+const TIER1 = 50;            // purchases 1..50 stay level 1 (50th is still level 1)
+const TIER_STEP = 100;       // each further level needs +100 purchases (count resets)
+const BASE_PRICE = 5;
+const MAX_LEVEL = 10;
+
+const game = {
+  coins:10,
+  purchases:0,
+  grid:new Array(SLOTS).fill(null), // each: {level} | null
+  level:1,
+  running:false,
+  runCoins:0,
+};
+
+function pickPower(lv){ return lv; }
+function pickMaxQ(lv){ return 45 + lv*30; }
+// level of the n-th purchase (1-based): 1..50 → lvl1, 51..150 → lvl2, then +100 per level
+function levelForPurchase(n){
+  if(n<=TIER1) return 1;
+  return Math.min(MAX_LEVEL, 2 + Math.floor((n-TIER1-1)/TIER_STEP));
+}
+function buyLevel(){ return levelForPurchase(game.purchases+1); }   // level of the NEXT pick
+function buyPrice(){ return Math.round(BASE_PRICE * Math.pow(1.5, buyLevel()-1)); }
+// progress toward the next level-up (the counter resets after each tier)
+function tierState(){
+  const p=game.purchases;
+  if(p<TIER1) return {inTier:p, tierLen:TIER1, nextLevel:2};
+  const over=p-TIER1, k=Math.floor(over/TIER_STEP);
+  return {inTier:over-k*TIER_STEP, tierLen:TIER_STEP, nextLevel:Math.min(MAX_LEVEL,3+k)};
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+function renderCoins(){ $('#coinVal').textContent=game.coins; }
+function renderProgress(){
+  const t=tierState();
+  $('#progressBar').style.width=clamp(t.inTier/t.tierLen,0,1)*100+'%';
+  $('#progressNum').textContent=`${t.inTier} / ${t.tierLen}`;
+  $('#progressTitle').textContent = buyLevel()>=MAX_LEVEL ? 'МАКС. УРОВЕНЬ' : `ДО УР.${t.nextLevel}`;
+}
+function renderBuyBtn(){
+  const price=buyPrice();
+  $('#buyBtn').disabled = game.running || game.coins<price || freeSlots().length===0;
+}
+function renderLaunchBtn(){
+  const has=game.grid.some(Boolean);
+  $('#launchBtn').disabled = game.running || !has;
+}
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); }
+
+let toastTimer=null;
+function toast(msg, ms=1700){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),ms);
+}
+
+/* =========================================================
+   MERGE FIELD
+   ========================================================= */
+let slotEls=[];
+function buildGrid(){
+  const g=$('#mergeGrid'); g.innerHTML='';
+  slotEls=[];
+  for(let i=0;i<SLOTS;i++){
+    const s=document.createElement('div'); s.className='slot'; s.dataset.idx=i;
+    g.appendChild(s); slotEls.push(s);
+  }
+}
+function freeSlots(){ const f=[]; for(let i=0;i<SLOTS;i++) if(!game.grid[i]) f.push(i); return f; }
+
+function makePickEl(level){
+  const p=document.createElement('div'); p.className='pick spawn';
+  const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
+  const lv=document.createElement('span'); lv.className='lv'; lv.textContent=level;
+  p.appendChild(img); p.appendChild(lv);
+  p.addEventListener('pointerdown',onPickDown);
+  setTimeout(()=>p.classList.remove('spawn'),300);
+  return p;
+}
+function renderSlot(i){
+  const s=slotEls[i]; s.innerHTML=''; s.classList.remove('mergeable','hoverdrop');
+  const cell=game.grid[i];
+  if(cell){ const el=makePickEl(cell.level); el.dataset.idx=i; s.appendChild(el); }
+}
+function addPickToGrid(level, animate=true){
+  const free=freeSlots();
+  if(free.length===0) return false;
+  const i=free[Math.floor(Math.random()*free.length)];
+  game.grid[i]={level};
+  renderSlot(i);
+  if(!animate){ const p=$('.pick',slotEls[i]); if(p) p.classList.remove('spawn'); }
+  return true;
+}
+
+/* ---- buy ---- */
+function buyPick(){
+  if(game.running) return;
+  const lv=buyLevel();              // level of this purchase (computed before increment)
+  const price=buyPrice();
+  if(game.coins<price){ toast('Недостаточно монет'); return; }
+  if(freeSlots().length===0){ toast('Нет свободного места'); return; }
+  audioInit();
+  game.coins-=price;
+  game.purchases++;
+  addPickToGrid(lv);
+  sfxBuy();
+  if(buyLevel()>lv) toast(`Теперь покупаются кирки ур.${buyLevel()}!`);
+  refreshUI();
+}
+
+/* ---- drag & merge (pointer based, mouse + touch) ---- */
+let drag=null;
+function onPickDown(e){
+  if(game.running) return;
+  const el=e.currentTarget; const from=+el.dataset.idx;
+  if(game.grid[from]==null) return;
+  e.preventDefault();
+  audioInit();
+  const slot=slotEls[from]; const r=slot.getBoundingClientRect();
+  drag={el,from,w:r.width,h:r.height,offX:r.width/2,offY:r.height/2,lastSlot:null};
+  el.classList.add('dragging');
+  el.style.position='fixed'; el.style.width=r.width+'px'; el.style.height=r.height+'px';
+  el.style.margin='0';
+  moveDragTo(e.clientX,e.clientY);
+  window.addEventListener('pointermove',onPickMove);
+  window.addEventListener('pointerup',onPickUp,{once:true});
+}
+function moveDragTo(x,y){
+  drag.el.style.left=(x-drag.offX)+'px';
+  drag.el.style.top=(y-drag.offY)+'px';
+}
+function slotUnder(x,y){
+  drag.el.style.visibility='hidden';
+  const t=document.elementFromPoint(x,y);
+  drag.el.style.visibility='';
+  return t? t.closest('.slot') : null;
+}
+function onPickMove(e){
+  if(!drag) return;
+  moveDragTo(e.clientX,e.clientY);
+  const s=slotUnder(e.clientX,e.clientY);
+  if(drag.lastSlot && drag.lastSlot!==s) drag.lastSlot.classList.remove('hoverdrop','mergeable');
+  drag.lastSlot=s;
+  if(!s) return;
+  const ti=+s.dataset.idx;
+  if(ti===drag.from){ s.classList.remove('hoverdrop','mergeable'); return; }
+  const target=game.grid[ti];
+  if(target && target.level===game.grid[drag.from].level && target.level<MAX_LEVEL){
+    s.classList.add('mergeable'); s.classList.remove('hoverdrop');
+  } else if(!target){
+    s.classList.add('hoverdrop'); s.classList.remove('mergeable');
+  } else { s.classList.remove('hoverdrop','mergeable'); }
+}
+function onPickUp(e){
+  window.removeEventListener('pointermove',onPickMove);
+  if(!drag) return;
+  const x=e.clientX, y=e.clientY;
+  const s=slotUnder(x,y);
+  const from=drag.from;
+  // reset the dragged element's inline drag styling
+  const stale=drag.el;
+  stale.style.position=''; stale.style.left=''; stale.style.top='';
+  stale.style.width=''; stale.style.height=''; stale.style.margin='';
+  stale.classList.remove('dragging');
+  if(drag.lastSlot) drag.lastSlot.classList.remove('hoverdrop','mergeable');
+  // dropped clearly outside the merge field → throw it away (3s timer, then delete)
+  const pr=$('#mergePanel').getBoundingClientRect();
+  const outside = x<pr.left||x>pr.right||y<pr.top||y>pr.bottom;
+  if(!s && outside){ drag=null; trashPick(from,x,y); return; }
+  let handled=false;
+  if(s){
+    const ti=+s.dataset.idx;
+    s.classList.remove('hoverdrop','mergeable');
+    if(ti!==from){
+      const a=game.grid[from], b=game.grid[ti];
+      if(b && a.level===b.level && b.level<MAX_LEVEL){       // MERGE
+        game.grid[ti]={level:b.level+1}; game.grid[from]=null;
+        renderSlot(from); renderSlot(ti);
+        const np=$('.pick',slotEls[ti]); if(np){ np.classList.add('merging'); setTimeout(()=>np.classList.remove('merging'),300); }
+        sfxMerge();
+        handled=true;
+        if(b.level+1===MAX_LEVEL) toast('Максимальный уровень кирки!');
+      } else if(b && a.level===b.level && b.level>=MAX_LEVEL){
+        toast('Уже максимальный уровень');
+      } else if(!b){                                         // MOVE
+        game.grid[ti]=a; game.grid[from]=null;
+        renderSlot(from); renderSlot(ti); handled=true;
+      }
+    }
+  }
+  if(!handled) renderSlot(from);
+  drag=null;
+  refreshUI();
+}
+// drag a pick out of the field → it floats with a 3s countdown, then deletes
+function trashPick(fromIdx, x, y){
+  const cell=game.grid[fromIdx]; if(!cell) return;
+  const level=cell.level;
+  game.grid[fromIdx]=null; renderSlot(fromIdx);
+  const f=document.createElement('div'); f.className='trashPick';
+  f.style.left=x+'px'; f.style.top=y+'px';
+  const ring=document.createElement('div'); ring.className='ring';
+  const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
+  const cnt=document.createElement('div'); cnt.className='cnt'; cnt.textContent='3';
+  f.appendChild(ring); f.appendChild(img); f.appendChild(cnt);
+  document.body.appendChild(f);
+  let remain=3, done=false;
+  const iv=setInterval(()=>{ remain--; if(remain>=1) cnt.textContent=remain; }, 1000);
+  const to=setTimeout(()=>{ done=true; clearInterval(iv); f.classList.add('gone'); setTimeout(()=>f.remove(),320); }, 3000);
+  // tap the falling pick before the timer runs out → rescue it back into the field
+  f.addEventListener('pointerdown',(e)=>{
+    e.preventDefault();
+    if(done) return;
+    // prefer the slot it came from; otherwise the first free one. field full → ignore
+    let slot = game.grid[fromIdx]==null ? fromIdx : null;
+    if(slot==null){ const fs=freeSlots(); slot = fs.length ? fs[0] : null; }
+    if(slot==null){ toast('Поле скрещивания заполнено'); return; }
+    done=true; clearInterval(iv); clearTimeout(to);
+    f.classList.add('saved'); setTimeout(()=>f.remove(),300);
+    game.grid[slot]={level}; renderSlot(slot);
+    sfxBuy();
+    refreshUI();
+  });
+  refreshUI();
+}
+
+/* =========================================================
+   DIG FIELD  —  generation, launch, camera, digging loop
+   ========================================================= */
+const SKY_H = 46;
+let dig = null;
+let pendingReturn = [];
+let launchSnapshot = [];   // {idx,level} of every pick at launch → restore same slots
+
+// deterministic PRNG (mulberry32) so a given level always generates the SAME
+// layout — retrying a failed level shows the same field instead of a new one
+function makeRng(seed){
+  let s=seed>>>0;
+  return ()=>{ s=(s+0x6D2B79F5)|0; let t=Math.imul(s^(s>>>15),1|s);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+}
+function makeDig(n){
+  const terrain = 14 + (n-1)*3;       // depth grows with level
+  const rng = makeRng((n*2654435761)>>>0);
+  const strataCols=[];                 // fixed per level, generated once here
+  for(let li=0;li<LANES;li++) strataCols.push(laneStrata(terrain,rng));
+  return {terrain, giftRow:terrain, rows:terrain+1, blockH:72, worldH:0,
+          strataCols, lanes:[], runners:[], lead:null, timer:null, _lastY:null};
+}
+// each lane gets its OWN ore column (richer deeper, but noisy)
+function laneStrata(terrain,rng){
+  const rnd = rng || Math.random;
+  const out=[];
+  for(let r=0;r<terrain;r++){
+    const f=r/terrain;                                // 0 (top) .. ~1 (deep)
+    let tier=Math.round(f*5 + (rnd()-0.5)*1.6);       // noise breaks up bands
+    out.push(BLOCK_ORDER[clamp(tier,0,5)]);
+  }
+  out.push('gift');
+  return out;
+}
+
+function blockEl(key,h){
+  const d=document.createElement('div'); d.className='blk'; d.style.height=h+'px';
+  if(key==='gift'){
+    d.style.background='linear-gradient(#2a2046,#1a1330)';
+    const g=document.createElement('img'); g.src=TEX.gift;
+    g.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66%;image-rendering:pixelated;filter:drop-shadow(0 3px 0 #0008);';
+    d.appendChild(g);
+  } else {
+    d.style.backgroundImage=`url(${TEX.blocks[key]})`;
+    d.style.backgroundSize='cover';
+    const cr=document.createElement('div'); cr.className='crack';
+    cr.style.backgroundImage=`url(${TEX.crack})`;
+    d.appendChild(cr); d._crack=cr;
+  }
+  return d;
+}
+// a "runner" = all picks dropped into one lane. They dig the SAME block
+// together (powers add up) but each pick is separate with its own quality.
+function makeRunner(laneIdx, levels){
+  const el=document.createElement('div'); el.className='digger'; el.style.top='0px';
+  const n=levels.length;
+  const restTop=Math.round(-dig.blockH*0.74 + 12);  // sit ON the block, not inside it
+  const picks=[];
+  levels.forEach((lv,i)=>{
+    const u=document.createElement('div'); u.className='punit';
+    u.style.left=(50+(i-(n-1)/2)*16)+'%';     // same size, fanned (overlap ok)
+    u.style.top=restTop+'px';
+    u.style.zIndex=String(10+i);
+    const q=document.createElement('div'); q.className='qbar';
+    q.style.top=(-8-i*7)+'px';                 // stack health bars so each is visible
+    const qi=document.createElement('i'); q.appendChild(qi);
+    const img=document.createElement('img'); img.src=TEX.picks[lv]; img.alt='';
+    u.appendChild(q); u.appendChild(img);
+    el.appendChild(u);
+    picks.push({level:lv,power:pickPower(lv),maxQ:pickMaxQ(lv),
+                quality:pickMaxQ(lv),alive:true,el:u,qbar:qi});
+  });
+  return {lane:laneIdx,row:0,progress:0,finished:false,el,picks,
+          speed:0.9+Math.random()*0.25};
+}
+
+// lanePicks: array of LANES arrays of levels (empty array = no pick), or null
+function buildField(lanePicks){
+  const lanesEl=$('#lanes'); lanesEl.innerHTML='';
+  dig.lanes=[]; dig.runners=[]; dig.lead=null; dig._lastY=null;
+  // build the 5 empty lanes first so we can measure a square block size
+  const laneDivs=[];
+  for(let li=0;li<LANES;li++){
+    const lane=document.createElement('div'); lane.className='lane';
+    lanesEl.appendChild(lane); laneDivs.push(lane);
+  }
+  const lw=Math.round(laneDivs[0].clientWidth);
+  dig.blockH = lw>20 ? lw : 72;                 // square: height = lane width
+  dig.worldH = SKY_H + dig.rows*dig.blockH;
+  // fill each lane with its own random ore column
+  for(let li=0;li<LANES;li++){
+    const lane=laneDivs[li];
+    const strata=dig.strataCols[li];            // reuse this level's fixed layout
+    const blocks=[];
+    for(let r=0;r<dig.rows;r++){
+      const key=strata[r]; const be=blockEl(key,dig.blockH); lane.appendChild(be);
+      if(key==='gift') blocks.push({key,el:be,broken:false,coins:0,hp:1,wear:0});
+      else { const def=BLOCKS[key]; blocks.push({key,el:be,broken:false,coins:def.coins,hp:def.hp,wear:def.wear}); }
+    }
+    dig.lanes.push({el:lane,blocks});
+  }
+  // drop a runner into every column that has at least one pick
+  if(lanePicks){
+    for(let li=0;li<LANES;li++){
+      const levels=lanePicks[li];
+      if(levels && levels.length){
+        const runner=makeRunner(li,levels);
+        dig.lanes[li].el.appendChild(runner.el);
+        dig.runners.push(runner);
+      }
+    }
+  }
+}
+
+function newLevel(n){
+  game.level=n;
+  $('#levelTag').textContent='УРОВЕНЬ '+n;
+  $('#digStatus').textContent='готово к запуску';
+  $('#depthVal').textContent='0';
+  $('#camFollow').textContent='камера: —';
+  $('#camDepth').textContent='';
+  dig=makeDig(n);
+  const w=$('#digWorld');
+  w.style.transition='none'; w.style.transform='translateY(0)';
+  buildField(null);
+  requestAnimationFrame(()=>{ w.style.transition=''; });
+  $('#digHint').textContent = game.grid.some(Boolean)
+      ? 'нажми «Запустить», чтобы скинуть кирки'
+      : 'купи кирки и объедини одинаковые, перетаскивая их';
+}
+
+/* ---- camera ---- */
+function focusCamera(){
+  if(!dig) return;
+  let lead=null;
+  for(const run of dig.runners){
+    if(run.finished) continue;
+    if(run.picks.some(p=>p.alive)){ if(!lead || run.row>lead.row) lead=run; }
+  }
+  dig.lead=lead;
+  dig.runners.forEach(r=>r.el.classList.toggle('lead', r===lead));
+  const H=$('#camera').clientHeight;
+  if(lead){
+    const b=dig.lanes[lead.lane].blocks[lead.row];
+    const frac=b?clamp(lead.progress/b.hp,0,1):0;
+    const leadY=SKY_H+(lead.row+frac+0.5)*dig.blockH;
+    const maxScroll=Math.max(0,dig.worldH-H);
+    const y=clamp(leadY-H*0.46,0,maxScroll);
+    $('#digWorld').style.transform=`translateY(${-y}px)`; dig._lastY=y;
+    const n=lead.picks.filter(p=>p.alive).length;
+    $('#camFollow').textContent=`камера: столбец ${lead.lane+1} · кирок ${n}`;
+    $('#camDepth').textContent=`глубина ${lead.row}/${dig.giftRow}`;
+    $('#depthVal').textContent=lead.row;
+  }
+}
+
+/* ---- digging tick ---- */
+function updatePickQ(p){
+  const r=clamp(p.quality/p.maxQ,0,1);
+  p.qbar.style.width=(r*100)+'%';
+  p.qbar.style.background = r>0.5?'#5ad15a':r>0.25?'#ffcf3f':'#ff5d6c';
+}
+function killPick(p){
+  if(!p.alive) return;
+  p.alive=false; p.el.classList.add('dead');
+}
+function coinFx(laneEl,row,val){
+  const f=document.createElement('div'); f.className='coinFx'; f.textContent='+'+val;
+  f.style.top=(row*dig.blockH+4)+'px';
+  laneEl.appendChild(f); setTimeout(()=>f.remove(),800);
+}
+function breakBlock(lane,row,b){
+  if(b.broken) return; b.broken=true;
+  b.el.classList.add('breaking');
+  setTimeout(()=>b.el.classList.add('broken'),110);
+  game.coins+=b.coins; game.runCoins+=b.coins;
+  if(b.coins>0) coinFx(lane.el,row,b.coins);
+  renderCoins();
+  sfxDig();
+}
+function tick(){
+  if(!dig||!game.running) return;
+  for(const run of dig.runners){
+    if(run.finished) continue;
+    const alivePicks=run.picks.filter(p=>p.alive);
+    if(alivePicks.length===0){              // every pick in this lane broke → lane done
+      run.el.classList.remove('swing'); run.finished=true; continue;
+    }
+    const lane=dig.lanes[run.lane];
+    const b=lane.blocks[run.row];
+    if(!b){ run.finished=true; continue; }
+    // all alive picks chip the SAME block — their powers add together
+    const power=alivePicks.reduce((s,p)=>s+p.power,0);
+    run.progress += power*run.speed;
+    // but each pick wears down on its own
+    for(const p of alivePicks){
+      p.quality-=b.wear;
+      if(p.quality<=0){ p.quality=0; killPick(p); }
+      updatePickQ(p);
+    }
+    if(b.el._crack) b.el._crack.style.opacity=clamp(run.progress/b.hp,0,1)*0.9;
+    run.el.style.top=(run.row*dig.blockH)+'px';
+    if(run.picks.some(p=>p.alive)) run.el.classList.add('swing');
+    else run.el.classList.remove('swing');
+    if(run.progress>=b.hp){
+      breakBlock(lane,run.row,b); run.progress=0;
+      const next=run.row+1;
+      if(next>=dig.giftRow){                // reached the gift at the bottom
+        run.row=dig.giftRow; run.el.style.top=(run.row*dig.blockH)+'px';
+        run.finished=true; run.reachedGift=true;
+        run.el.classList.remove('swing','lead'); run.el.classList.add('won');
+        sfxGift();
+      } else run.row=next;
+    }
+  }
+  focusCamera();
+  // the level ends only once EVERY lane is done (reached its gift OR lost all picks),
+  // so two lanes reaching a gift pay out two rewards
+  if(dig.runners.every(r=>r.finished)){
+    const winners=dig.runners.filter(r=>r.reachedGift);
+    if(winners.length) onLevelComplete(winners);
+    else onRunFail();
+  }
+}
+function stopTick(){
+  if(dig&&dig.timer){ clearInterval(dig.timer); dig.timer=null; }
+  if(dig) dig.runners.forEach(r=>r.el.classList.remove('swing'));
+}
+
+/* ---- launch ---- */
+function launch(){
+  if(game.running) return;
+  // group picks by merge COLUMN (grid index = row*5 + col) → one lane each
+  const lanePicks=[]; let total=0;
+  launchSnapshot=[];
+  for(let c=0;c<LANES;c++){
+    const arr=[];
+    for(let r=0;r<3;r++){
+      const idx=r*LANES+c;
+      if(game.grid[idx]){
+        const lv=game.grid[idx].level;
+        arr.push(lv); launchSnapshot.push({idx,level:lv});
+        game.grid[idx]=null; total++;
+      }
+    }
+    lanePicks.push(arr);
+  }
+  if(total===0){ toast('Сначала купи кирку'); return; }
+  audioInit();
+  for(let i=0;i<SLOTS;i++) renderSlot(i);
+  game.running=true; game.runCoins=0;
+  buildField(lanePicks);
+  $('#digWorld').style.transform='translateY(0)'; dig._lastY=0;
+  $('#digStatus').textContent='копаем…';
+  $('#digHint').textContent='камера следит за самой глубокой колонкой кирок';
+  // immersive mode: dive into the full-screen dig view (only the field is visible)
+  document.body.classList.add('digging');
+  refreshUI();
+  focusCamera();
+  dig.timer=setInterval(tick,110);
+}
+
+/* ---- run outcomes ---- */
+// put picks back exactly where they launched from (preserve the player's layout)
+function returnPicks(snap){
+  snap.forEach(({idx,level})=>{
+    if(idx!=null && !game.grid[idx]){ game.grid[idx]={level}; renderSlot(idx); }
+    else addPickToGrid(level);
+  });
+}
+function onLevelComplete(winners){
+  stopTick(); game.running=false;
+  sfxComplete();
+  let reward=0;
+  winners.forEach(()=>{ reward += rndInt(30,70); });   // a separate gift bonus per winning lane
+  game.coins+=reward; game.runCoins+=reward;
+  renderCoins();
+  const lanes=winners.map(r=>r.lane+1).join(', ');
+  const multi=winners.length>1;
+  $('#bannerGift').src=TEX.gift;
+  $('#bannerTitle').textContent = multi ? `НАЙДЕНО ПОДАРКОВ: ${winners.length}!` : 'ПОДАРОК НАЙДЕН!';
+  $('#bannerText').innerHTML=
+    `${multi?'Столбцы':'Столбец'} <b>${lanes}</b> докопал${multi?'и':'ся'} до подарка!<br>`+
+    `Бонус за подарки: <b>+${reward}</b> монет.<br>`+
+    `Всего за заход: <b>+${game.runCoins}</b> монет.`;
+  $('#banner').classList.add('show');
+  $('#digStatus').textContent='уровень пройден!';
+  pendingReturn = launchSnapshot.slice();
+}
+// slide the full-screen dig view back down, then reveal the merge field again
+function leaveImmersive(cb){
+  const dp=$('#digPanel');
+  const finish=()=>{ document.body.classList.remove('digging'); dp.classList.remove('leaving'); window.scrollTo({top:0}); if(cb) cb(); };
+  if(!document.body.classList.contains('digging')){ finish(); return; }
+  dp.classList.add('leaving');
+  setTimeout(finish, 380);
+}
+function onBannerNext(){
+  $('#banner').classList.remove('show');
+  leaveImmersive(()=>{                                   // dig view slides down, camera rises to the merge field
+    newLevel(game.level+1);
+    returnPicks(pendingReturn);
+    pendingReturn=[];
+    refreshUI();
+  });
+}
+function onRunFail(){
+  stopTick(); game.running=false;
+  $('#digStatus').textContent='все кирки сломались';
+  toast('Все кирки сломались — кирки вернулись на свои места, грунт восстановлен');
+  const snap=launchSnapshot.slice();
+  leaveImmersive(()=>{                                   // dig view slides down, camera rises to the merge field
+    newLevel(game.level);
+    returnPicks(snap);
+    refreshUI();
+  });
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+function boot(){
+  buildTextures();
+  $('#coinIcon').src=TEX.coin;
+  buildGrid();
+  $('#buyBtn').addEventListener('click',buyPick);
+  $('#launchBtn').addEventListener('click',launch);
+  $('#bannerBtn').addEventListener('click',onBannerNext);
+  newLevel(1);
+  refreshUI();
+}
+
+boot();
+</script>
+</body>
+</html>
