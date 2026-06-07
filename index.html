@@ -129,7 +129,21 @@
   .trashPick.gone{opacity:0; transform:scale(.4) translateY(10px); transition:all .3s ease;}
 
   /* ---------- CONTROLS ---------- */
-  #controls{display:flex; gap:10px;}
+  /* the whole row is one button tall: left column = buy stacked over buy-all
+     (each shrinks to half), right = launch filling the same height */
+  #controls{display:flex; gap:10px; align-items:stretch; height:58px; flex:0 0 auto;}
+  #buyStack{flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;}
+  #launchBtn{flex:1; display:flex; align-items:center; justify-content:center;}
+  /* the two stacked buy buttons split the column → compact, single line */
+  #buyStack .btn{
+    flex:1 1 0; min-height:0; padding:2px 8px;
+    border-width:2px; border-radius:11px; box-shadow:0 3px 0 0 #0c0e12;
+    white-space:nowrap; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  #buyStack .btn:active{transform:translateY(3px); box-shadow:0 0 0 0 #0c0e12;}
+  .btn .pr{font-size:9px; font-weight:700; opacity:.82; text-transform:none; letter-spacing:0;}
+  .btn.buy.alt{background:linear-gradient(#f0cf86,#c59a3e);}   /* buy-all: lighter gold to set it apart */
   .btn{
     flex:1; padding:13px 6px; font-family:inherit; font-weight:700; font-size:13px;
     color:#22262e; cursor:pointer; letter-spacing:1px;
@@ -263,7 +277,7 @@
   #banner.show{display:flex; animation:fadeIn .25s ease;}
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
   #bannerBox{
-    width:86%; max-width:340px; padding:22px 18px; text-align:center;
+    width:90%; max-width:360px; padding:22px 16px; text-align:center;
     background:var(--panel); border:3px solid var(--frame);
     box-shadow:inset 0 0 0 3px var(--frame2),0 8px 0 #05030a;
   }
@@ -274,6 +288,131 @@
   .giftBig{width:64px; height:64px; image-rendering:pixelated; margin:0 auto 10px; display:block;
     filter:drop-shadow(0 4px 0 #0008); animation:bob .8s ease-in-out infinite;}
 
+  /* level progress line (1..10) shown after each win */
+  #levelTrack{margin:4px 0 16px;}
+  #levelTrackLabel{font-size:9px; color:var(--ink-dim); letter-spacing:1.5px; margin-bottom:9px;}
+  #levelLine{display:flex; flex-wrap:wrap; justify-content:center; gap:4px;}
+  .lvNode{
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; color:#586173;
+    background:#23262d; border:2px solid var(--frame);
+    box-shadow:inset 0 0 0 2px var(--frame2);
+  }
+  .lvNode.done{background:linear-gradient(var(--gold),var(--gold-d)); color:#3a2600;}
+  .lvNode.next{background:linear-gradient(var(--green),var(--green-d)); color:#06210a;
+    animation:lvPulse 1s ease-in-out infinite;}
+  @keyframes lvPulse{
+    0%,100%{transform:scale(1);    box-shadow:inset 0 0 0 2px var(--frame2), 0 0 0 0 #7bb78f55;}
+    50%    {transform:scale(1.14); box-shadow:inset 0 0 0 2px var(--frame2), 0 0 9px 2px #7bb78fcc;}
+  }
+
+  /* ---------- HEADER ACTIONS (updates / promo) ---------- */
+  #headerRow{display:flex; align-items:center; gap:6px;}
+  #headerRow .hSpace{flex:0 0 60px;}           /* mirrors #topActions so the title stays centered */
+  #headerRow #title{flex:1 1 auto; padding:2px 0;}
+  #topActions{flex:0 0 60px; display:flex; flex-direction:column; gap:5px;}
+  .iconBtn{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    width:100%; padding:5px 3px; line-height:1; cursor:pointer;
+    font-family:inherit; font-weight:700; font-size:8px; letter-spacing:.2px;
+    color:var(--ink); background:var(--panel2);
+    border:2px solid var(--frame); border-radius:9px;
+    box-shadow:inset 0 0 0 2px var(--frame2), 0 3px 0 #05030a;
+    transition:transform .06s, box-shadow .06s;
+  }
+  .iconBtn:active{transform:translateY(2px); box-shadow:inset 0 0 0 2px var(--frame2), 0 1px 0 #05030a;}
+  .iconBtn .ic{font-size:15px; line-height:1;}
+  .iconBtn .lb{white-space:nowrap;}
+
+  /* ---------- MODALS ---------- */
+  .modal{
+    position:fixed; inset:0; z-index:300; display:none; padding:16px;
+    align-items:center; justify-content:center;
+    background:#14161bcc; backdrop-filter:blur(2px);
+  }
+  .modal.show{display:flex; animation:fadeIn .25s ease;}
+  .modalBox{
+    width:100%; max-width:360px; max-height:86vh; overflow-y:auto;
+    padding:20px 18px; text-align:center; background:var(--panel);
+    border:3px solid var(--frame);
+    box-shadow:inset 0 0 0 3px var(--frame2), 0 8px 0 #05030a;
+  }
+  .modalHead{display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:14px;}
+  .modalIcon{font-size:22px; line-height:1;}
+  .modalBox h2{
+    font-size:20px; color:var(--gold); letter-spacing:2px; margin:0;
+    text-shadow:0 2px 0 var(--gold-d),0 4px 0 #5a3d00;
+  }
+  .modalSub{font-size:12px; color:var(--ink-dim); line-height:1.6; margin-bottom:14px;}
+  .modalHint{font-size:10px; color:var(--ink-dim); line-height:1.5; margin:12px 2px 16px;}
+  .modalDone{margin-top:4px; color:#06210a;}
+
+  /* changelog list */
+  #changelog{text-align:left; margin-bottom:16px; display:flex; flex-direction:column; gap:10px;}
+  .logEntry{
+    padding:10px 12px; background:var(--bg1);
+    border:2px solid var(--frame); border-radius:8px;
+    box-shadow:inset 0 0 0 2px var(--frame2);
+  }
+  .logDate{font-size:10px; color:var(--ink-dim); letter-spacing:1px; display:flex; align-items:center; gap:6px;}
+  .newBadge{
+    font-size:8px; font-weight:800; letter-spacing:.5px; color:#10241a;
+    background:linear-gradient(var(--green),var(--green-d));
+    padding:1px 5px; border-radius:5px; border:1px solid #0c2016;
+  }
+  .logTitle{font-size:14px; color:var(--gold); margin:2px 0 4px; letter-spacing:.5px;}
+  .logText{font-size:12px; color:var(--ink); line-height:1.5; font-weight:600;}
+
+  /* === distinct theme: UPDATES (cool steel-blue news) === */
+  .modalBox.updatesBox{
+    background:linear-gradient(180deg,#2a323e,#20252d);
+    box-shadow:inset 0 0 0 3px #3c4a5c, 0 8px 0 #05030a;
+  }
+  .updatesBox h2{color:#bdd6f0; text-shadow:0 2px 0 #35536f,0 4px 0 #142230;}
+  .updatesBox .modalIcon{filter:drop-shadow(0 0 6px #6f9fd0);}
+  .updatesBox .logEntry{
+    background:#222a34; border-color:#10151c;
+    box-shadow:inset 0 0 0 2px #36475a; border-left:4px solid #6f9fd0;
+  }
+  .updatesBox .logEntry.newest{border-left-color:var(--green); box-shadow:inset 0 0 0 2px #3a5a48;}
+  .updatesBox .logTitle{color:#a8cbef;}
+
+  /* === distinct theme: PROMO (warm gold gift) === */
+  .modalBox.promoBox{
+    background:linear-gradient(180deg,#352d20,#251f16);
+    box-shadow:inset 0 0 0 3px #5e4c2a, 0 8px 0 #05030a;
+  }
+  .promoBox h2{color:#ffda8a; text-shadow:0 2px 0 #9a6a1a,0 4px 0 #4a3000;}
+  .promoBox .modalIcon{filter:drop-shadow(0 0 7px #e6b455);}
+  .promoBox .modalSub{color:#d8c49a;}
+  .promoBox .modalHint{color:#b39c6e;}
+  .promoBox #promoInput{background:#1c160c; border-color:#3a2c12;}
+  .promoBox #promoInput:focus{box-shadow:inset 0 0 0 2px var(--gold);}
+
+  /* === update note (soft violet "new build" accent) === */
+  .modalBox.noteBox{
+    background:linear-gradient(180deg,#2f2a3c,#221f2c);
+    box-shadow:inset 0 0 0 3px #4a416a, 0 8px 0 #05030a;
+  }
+  .noteBox h2{color:#d6c8ff; text-shadow:0 2px 0 #4a3a80,0 4px 0 #241a44;}
+  .noteBox .modalIcon{filter:drop-shadow(0 0 7px #b89aff);}
+  .noteBox .modalSub{color:#c8bce6;}
+
+  /* promo input (full width) + stacked action buttons */
+  #promoInput{
+    display:block; width:100%; padding:12px; margin-bottom:2px;
+    font-family:inherit; font-weight:700; font-size:14px; letter-spacing:.5px;
+    color:var(--ink); background:#0e1014; text-align:center;
+    border:3px solid var(--frame); border-radius:12px;
+    box-shadow:inset 0 0 0 2px var(--frame2);
+  }
+  #promoInput::placeholder{color:var(--ink-dim); font-weight:600; opacity:.7;}
+  #promoInput:focus{outline:none; box-shadow:inset 0 0 0 2px var(--gold);}
+  .modalBtns{display:flex; flex-direction:column; gap:8px; margin-top:8px;}
+  .promoMsg{min-height:16px; font-size:12px; margin-top:10px; font-weight:700;}
+  .noteBtns{display:flex; flex-direction:column; gap:8px;}
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -281,7 +420,14 @@
 <div id="game">
 
   <div id="topbar">
-    <div id="title">MIX BRICKS</div>
+    <div id="headerRow">
+      <div class="hSpace"></div>
+      <div id="title">MIX BRICKS</div>
+      <div id="topActions">
+        <button class="iconBtn" id="updatesBtn"><span class="ic">📋</span><span class="lb">Обновления</span></button>
+        <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
+      </div>
+    </div>
     <div id="statRow">
       <div id="coins" class="pix"><img class="coinIcon" id="coinIcon" alt=""><span id="coinVal">10</span></div>
       <div id="progressWrap" class="pix">
@@ -296,7 +442,10 @@
   </div>
 
   <div id="controls">
-    <button class="btn buy" id="buyBtn">КУПИТЬ</button>
+    <div id="buyStack">
+      <button class="btn buy" id="buyBtn">КУПИТЬ</button>
+      <button class="btn buy alt" id="bulkBtn">КУПИТЬ ВСЁ</button>
+    </div>
     <button class="btn go" id="launchBtn">ЗАПУСТИТЬ</button>
   </div>
 
@@ -324,7 +473,41 @@
   <img id="bannerGift" class="giftBig" alt="">
   <h2 id="bannerTitle">УРОВЕНЬ ПРОЙДЕН!</h2>
   <p id="bannerText"></p>
-  <button class="btn go" id="bannerBtn" style="color:#06210a;">ДАЛЬШЕ</button>
+  <div id="levelTrack">
+    <div id="levelTrackLabel">ПРОГРЕСС · 10 УРОВНЕЙ</div>
+    <div id="levelLine"></div>
+  </div>
+  <button class="btn go" id="bannerBtn" style="color:#06210a;">ИГРАТЬ</button>
+</div></div>
+
+<!-- updates / changelog (cool steel-blue news theme) -->
+<div class="modal" id="updatesModal"><div class="modalBox updatesBox">
+  <div class="modalHead"><span class="modalIcon">📋</span><h2>ОБНОВЛЕНИЯ</h2></div>
+  <div id="changelog"></div>
+  <button class="btn go modalDone" data-close="updatesModal">ЗАКРЫТЬ</button>
+</div></div>
+
+<!-- promo codes (warm gold gift theme) -->
+<div class="modal" id="promoModal"><div class="modalBox promoBox">
+  <div class="modalHead"><span class="modalIcon">🎁</span><h2>ПРОМОКОДЫ</h2></div>
+  <p class="modalSub">Введи промокод и получи награду.</p>
+  <input id="promoInput" type="text" placeholder="введите промокод" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div id="promoMsg" class="promoMsg"></div>
+  <div class="modalHint">Новые промокоды публикуются в списке обновлений.</div>
+  <div class="modalBtns">
+    <button class="btn buy" id="promoRedeem">ВВЕСТИ</button>
+    <button class="btn go modalDone" data-close="promoModal">ЗАКРЫТЬ</button>
+  </div>
+</div></div>
+
+<!-- "update available" note (one-time) -->
+<div class="modal" id="updateNote"><div class="modalBox noteBox">
+  <div class="modalHead"><span class="modalIcon">✨</span><h2>ОБНОВЛЕНИЕ</h2></div>
+  <p class="modalSub">Обновление доступно: просмотрите добавления в&nbsp;списке обновлений.</p>
+  <div class="noteBtns">
+    <button class="btn buy" id="noteOpen">СПИСОК ОБНОВЛЕНИЙ</button>
+    <button class="btn go modalDone" data-close="updateNote">ОК</button>
+  </div>
 </div></div>
 
 <script>
@@ -459,7 +642,7 @@ const BLOCKS = {
 };
 const BLOCK_ORDER = ['earth','stone','copper','iron','gold','gem'];
 
-// distinct colour per pick level 1..10  [light, mid, dark]  (no pink)
+// distinct colour per pick level 1..11  [light, mid, dark]  (no pink)
 const METAL = {
   1:['#e8e8f0','#a8a8b8','#5c5c68'],   // silver
   2:['#ff8a6a','#e23a1a','#8a1808'],   // red
@@ -471,6 +654,7 @@ const METAL = {
   8:['#78d0ff','#22a0e8','#0e6088'],   // cyan
   9:['#88a0ff','#3850e8','#1c2888'],   // blue
  10:['#b89aff','#7038d8','#3a1480'],   // violet
+ 11:['#ffffff','#bfe0ff','#5f7fb0'],   // diamond (top tier)
 };
 
 const PICK_ROWS = [
@@ -524,28 +708,34 @@ function makeGift(){
   }, 5);
 }
 
-const COIN_ROWS = [
- "................",
- ".....lllll......",
- "...llLLLLLll....",
- "..lLLLLLLLDl....",
- ".lLLLOLLOLLDl...",
- ".lLLLLLLLLLDl...",
- ".lLLOLLLLOLDl...",
- ".lLLLOOOLLLDl...",
- ".lLLLLLLLLLDl...",
- ".lLLLLLLLLLDl...",
- "..lLLLLLLLDl....",
- "...llDDDDll.....",
- ".....DDDDD......",
- "................",
- "................",
- "................",
-];
+// procedural gold coin: shaded disc with a beveled rim, top-left glint and a sparkle
 function makeCoin(){
-  return pixMap(COIN_ROWS, {
-    'l':'#fff0a0','L':'#ffd23f','D':'#caa11f','O':'#a8801a',
-  }, 4);
+  const S=16, scale=4; const {c,x}=cv(S*scale);
+  const cx=7.5, cy=7.5, R=7.4;
+  const put=(px,py,col)=>{ x.fillStyle=col; x.fillRect(px*scale,py*scale,scale,scale); };
+  for(let py=0;py<S;py++) for(let px=0;px<S;px++){
+    const dx=px-cx, dy=py-cy, d=Math.hypot(dx,dy);
+    if(d>R) continue;                                   // outside the coin
+    let col;
+    if(d>R-1.1)        col='#8f6314';                   // dark outer rim
+    else if(d>R-2.1)   col=(dx+dy<0)?'#ffe488':'#a9761a'; // bevel: lit top-left, dark bottom-right
+    else{
+      const l=-(dx+dy)/(R*1.5);                         // directional light (bright at top-left)
+      col = l>0.42 ? '#fff0a8'
+          : l>0.12 ? '#ffdf63'
+          : l>-0.18? '#ffd23f'
+          : l>-0.5 ? '#ecb52b'
+          :          '#d49a20';
+    }
+    put(px,py,col);
+  }
+  // compact 4-point sparkle in the centre
+  for(let yy=6;yy<=9;yy++){ put(7,yy,'#fff3c4'); put(8,yy,'#fff3c4'); }
+  for(let xx=6;xx<=9;xx++){ put(xx,7,'#fff3c4'); put(xx,8,'#fff3c4'); }
+  put(7,7,'#ffffff'); put(8,7,'#ffffff'); put(7,8,'#fff7d6'); put(8,8,'#fff7d6');
+  // tiny extra glint near the top-left
+  put(5,4,'#fff7d6'); put(4,5,'#fff3c4');
+  return c.toDataURL();
 }
 
 /* =========================================================
@@ -553,7 +743,7 @@ function makeCoin(){
    ========================================================= */
 const TEX = { picks:{}, blocks:{}, gift:'', coin:'', crack:'' };
 function buildTextures(){
-  for(let lv=1;lv<=10;lv++) TEX.picks[lv]=makePick(lv);
+  for(let lv=1;lv<=MAX_LEVEL;lv++) TEX.picks[lv]=makePick(lv);
   for(const k in BLOCKS) TEX.blocks[k]=makeBlockTex(BLOCKS[k]);
   TEX.gift=makeGift(); TEX.coin=makeCoin(); TEX.crack=makeCrack();
 }
@@ -566,7 +756,8 @@ const LANES = 5;             // dig lanes = merge columns (always 5)
 const TIER1 = 50;            // purchases 1..50 stay level 1 (50th is still level 1)
 const TIER_STEP = 100;       // each further level needs +100 purchases (count resets)
 const BASE_PRICE = 5;
-const MAX_LEVEL = 10;
+const MAX_LEVEL = 11;        // highest pick level
+const MAX_GAME_LEVEL = 10;   // the game has 10 dig levels in total
 
 const game = {
   coins:10,
@@ -575,6 +766,8 @@ const game = {
   level:1,
   running:false,
   runCoins:0,
+  usedPromos:[],     // promo codes already redeemed
+  seenUpdate:false,  // whether the "update available" note was shown
 };
 
 function pickPower(lv){ return lv; }
@@ -593,6 +786,69 @@ function tierState(){
   const over=p-TIER1, k=Math.floor(over/TIER_STEP);
   return {inTier:over-k*TIER_STEP, tierLen:TIER_STEP, nextLevel:Math.min(MAX_LEVEL,3+k)};
 }
+// how many picks a single bulk purchase would buy, and the total cost,
+// honouring both the player's balance and the number of free slots
+function planBulkBuy(){
+  let coins=game.coins, purchases=game.purchases, slots=freeSlots().length;
+  let count=0, cost=0;
+  while(slots>0){
+    const lv=levelForPurchase(purchases+1);
+    const price=Math.round(BASE_PRICE*Math.pow(1.5,lv-1));
+    if(coins<price) break;
+    coins-=price; purchases++; slots--; count++; cost+=price;
+  }
+  return {count, cost};
+}
+
+/* =========================================================
+   CONTENT  (changelog + promo codes)
+   ========================================================= */
+// newest entry first — rendered top-to-bottom in the updates list
+const CHANGELOG = [
+  {date:'07.06.2026', title:'пак улучшений',
+   text:'добавлен список обновлений и новый дизайн окон, покупка кирок стала проще. Добавлен 11-й уровень кирки, монетки стали красивее. Система промокодов доступна — введите промокод «Update2» и получите кирку 10 уровня!'},
+  {date:'31.05.2026', title:'релиз',
+   text:'игра доступна!'},
+];
+// keys are stored lower-case; matching is case-insensitive
+const PROMOS = {
+  'update2': {reward:'pick10', label:'Кирка 10 уровня'},
+};
+
+/* =========================================================
+   SAVE  (localStorage persistence)
+   ========================================================= */
+const SAVE_KEY='mixbricks_save_v1';
+function save(){
+  if(game.running) return;   // never persist a mid-run (empty) field
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      v:1,
+      coins:game.coins,
+      purchases:game.purchases,
+      grid:game.grid,
+      level:game.level,
+      usedPromos:game.usedPromos,
+      seenUpdate:game.seenUpdate,
+    }));
+  }catch(e){ /* storage unavailable — ignore */ }
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY); if(!raw) return false;
+    const s=JSON.parse(raw); if(!s || s.v!==1) return false;
+    game.coins      = Number.isFinite(s.coins) ? s.coins : 10;
+    game.purchases  = Number.isFinite(s.purchases) ? s.purchases : 0;
+    game.level      = Number.isFinite(s.level) ? clamp(s.level,1,MAX_GAME_LEVEL) : 1;
+    game.grid       = (Array.isArray(s.grid) && s.grid.length===SLOTS)
+                        ? s.grid.map(c => (c && Number.isFinite(c.level)) ? {level:c.level} : null)
+                        : new Array(SLOTS).fill(null);
+    game.usedPromos = Array.isArray(s.usedPromos) ? s.usedPromos.filter(x=>typeof x==='string') : [];
+    game.seenUpdate = !!s.seenUpdate;
+    return true;
+  }catch(e){ return false; }
+}
+function renderAllSlots(){ for(let i=0;i<SLOTS;i++) renderSlot(i); }
 
 /* =========================================================
    HUD
@@ -606,13 +862,32 @@ function renderProgress(){
 }
 function renderBuyBtn(){
   const price=buyPrice();
-  $('#buyBtn').disabled = game.running || game.coins<price || freeSlots().length===0;
+  const btn=$('#buyBtn');
+  btn.disabled = game.running || game.coins<price || freeSlots().length===0;
+  btn.textContent = 'КУПИТЬ';
+}
+function renderBulkBtn(){
+  const btn=$('#bulkBtn'); if(!btn) return;
+  const plan=planBulkBuy();
+  // only show when the player can afford MORE THAN ONE pick
+  const show = !game.running && plan.count>=2;
+  btn.style.display = show ? '' : 'none';
+  btn.disabled = !show;
+  if(show) btn.textContent = 'КУПИТЬ ВСЁ';
+}
+// Russian plural ending on the stem «кирк»: 1→кирка, 2-4→кирки, else→кирок
+function plural(n){
+  const a=Math.abs(n)%100, b=a%10;
+  if(a>=11&&a<=14) return 'ок';  // 11..14 → «кирок»
+  if(b===1) return 'а';          // 1,21,31 → «кирка»
+  if(b>=2&&b<=4) return 'и';     // 2,3,4 → «кирки»
+  return 'ок';                   // 0,5..9 → «кирок»
 }
 function renderLaunchBtn(){
   const has=game.grid.some(Boolean);
   $('#launchBtn').disabled = game.running || !has;
 }
-function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); }
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderBulkBtn(); renderLaunchBtn(); save(); }
 
 let toastTimer=null;
 function toast(msg, ms=1700){
@@ -674,6 +949,29 @@ function buyPick(){
   refreshUI();
 }
 
+/* ---- buy as many as the balance + free slots allow ---- */
+function bulkBuy(){
+  if(game.running) return;
+  const plan=planBulkBuy();
+  if(plan.count===0){
+    toast(freeSlots().length===0 ? 'Нет свободного места' : 'Недостаточно монет');
+    return;
+  }
+  audioInit();
+  const startLv=buyLevel();
+  for(let k=0;k<plan.count;k++){
+    const lv=buyLevel();
+    game.coins-=buyPrice();
+    game.purchases++;
+    addPickToGrid(lv);
+  }
+  sfxBuy();
+  const endLv=buyLevel();
+  toast(`Куплено: ${plan.count} кирк${plural(plan.count)} за ${plan.cost} мон.`);
+  if(endLv>startLv) setTimeout(()=>toast(`Теперь покупаются кирки ур.${endLv}!`),900);
+  refreshUI();
+}
+
 /* ---- drag & merge (pointer based, mouse + touch) ---- */
 let drag=null;
 function onPickDown(e){
@@ -732,7 +1030,19 @@ function onPickUp(e){
   // dropped clearly outside the merge field → throw it away (3s timer, then delete)
   const pr=$('#mergePanel').getBoundingClientRect();
   const outside = x<pr.left||x>pr.right||y<pr.top||y>pr.bottom;
-  if(!s && outside){ drag=null; trashPick(from,x,y); return; }
+  if(!s && outside){
+    // don't let the player throw away their VERY LAST pick if they can't
+    // afford a replacement — that would soft-lock the game
+    const remaining=game.grid.filter(Boolean).length;   // still includes this pick
+    if(remaining<=1 && game.coins<buyPrice()){
+      renderSlot(from);                                  // snap it back into place
+      drag=null;
+      toast('Нельзя выбросить последнюю кирку — не хватит монет на новую');
+      refreshUI();
+      return;
+    }
+    drag=null; trashPick(from,x,y); return;
+  }
   let handled=false;
   if(s){
     const ti=+s.dataset.idx;
@@ -1061,6 +1371,18 @@ function returnPicks(snap){
     else addPickToGrid(level);
   });
 }
+// draw the 1..10 progress line: levels up to `doneUpTo` are passed, the next one
+// is highlighted as the one you'll play, the rest are locked
+function renderLevelLine(doneUpTo){
+  const box=$('#levelLine'); if(!box) return;
+  box.innerHTML='';
+  for(let i=1;i<=MAX_GAME_LEVEL;i++){
+    const n=document.createElement('div');
+    n.className='lvNode '+(i<=doneUpTo?'done':(i===doneUpTo+1?'next':'locked'));
+    n.textContent=i;
+    box.appendChild(n);
+  }
+}
 function onLevelComplete(winners){
   stopTick(); game.running=false;
   sfxComplete();
@@ -1068,16 +1390,20 @@ function onLevelComplete(winners){
   winners.forEach(()=>{ reward += rndInt(30,70); });   // a separate gift bonus per winning lane
   game.coins+=reward; game.runCoins+=reward;
   renderCoins();
-  const lanes=winners.map(r=>r.lane+1).join(', ');
-  const multi=winners.length>1;
+  const finished = game.level>=MAX_GAME_LEVEL;          // just cleared the final level
   $('#bannerGift').src=TEX.gift;
-  $('#bannerTitle').textContent = multi ? `НАЙДЕНО ПОДАРКОВ: ${winners.length}!` : 'ПОДАРОК НАЙДЕН!';
-  $('#bannerText').innerHTML=
-    `${multi?'Столбцы':'Столбец'} <b>${lanes}</b> докопал${multi?'и':'ся'} до подарка!<br>`+
-    `Бонус за подарки: <b>+${reward}</b> монет.<br>`+
-    `Всего за заход: <b>+${game.runCoins}</b> монет.`;
+  $('#bannerTitle').textContent = finished ? 'ИГРА ПРОЙДЕНА!' : `УРОВЕНЬ ${game.level} ПРОЙДЕН!`;
+  $('#bannerText').innerHTML = finished
+    ? `Поздравляем — пройдены все <b>${MAX_GAME_LEVEL}</b> уровней!<br>`+
+      `Бонус: <b>+${reward}</b> · за заход: <b>+${game.runCoins}</b> монет.`
+    : `Найдено подарков: <b>${winners.length}</b> · бонус <b>+${reward}</b> монет.<br>`+
+      `Всего за заход: <b>+${game.runCoins}</b> монет.<br>`+
+      `Нажми «Играть», чтобы перейти на уровень <b>${game.level+1}</b>.`;
+  $('#levelTrackLabel').textContent = finished ? 'ВСЕ УРОВНИ ПРОЙДЕНЫ' : `ПРОГРЕСС · УРОВЕНЬ ${game.level} ИЗ ${MAX_GAME_LEVEL}`;
+  renderLevelLine(game.level);
+  $('#bannerBtn').textContent = finished ? 'НАЧАТЬ ЗАНОВО' : `ИГРАТЬ · УРОВЕНЬ ${game.level+1}`;
   $('#banner').classList.add('show');
-  $('#digStatus').textContent='уровень пройден!';
+  $('#digStatus').textContent = finished ? 'игра пройдена!' : 'уровень пройден!';
   pendingReturn = launchSnapshot.slice();
 }
 // slide the full-screen dig view back down, then reveal the merge field again
@@ -1090,8 +1416,9 @@ function leaveImmersive(cb){
 }
 function onBannerNext(){
   $('#banner').classList.remove('show');
+  const nextLevel = game.level>=MAX_GAME_LEVEL ? 1 : game.level+1;   // wrap to 1 after the final level
   leaveImmersive(()=>{                                   // dig view slides down, camera rises to the merge field
-    newLevel(game.level+1);
+    newLevel(nextLevel);
     returnPicks(pendingReturn);
     pendingReturn=[];
     refreshUI();
@@ -1110,17 +1437,104 @@ function onRunFail(){
 }
 
 /* =========================================================
+   MODALS  (updates list, promo codes, update note)
+   ========================================================= */
+function openModal(id){ audioInit(); $('#'+id).classList.add('show'); }
+function closeModal(id){ $('#'+id).classList.remove('show'); }
+
+function renderChangelog(){
+  const box=$('#changelog'); if(!box) return;
+  box.innerHTML='';
+  // oldest → newest, top to bottom (newest entry sits at the bottom)
+  const toNum=d=>{ const p=String(d).split('.').map(Number); return (p[2]||0)*10000+(p[1]||0)*100+(p[0]||0); };
+  const list=CHANGELOG.slice().sort((a,b)=>toNum(a.date)-toNum(b.date));
+  const newest=list.length-1;
+  list.forEach((e,i)=>{
+    const isNew=i===newest;
+    const row=document.createElement('div'); row.className='logEntry'+(isNew?' newest':'');
+    row.innerHTML=
+      `<div class="logDate">${e.date}${isNew?'<span class="newBadge">НОВОЕ</span>':''}</div>`+
+      `<div class="logTitle">${e.title}</div>`+
+      `<div class="logText">${e.text}</div>`;
+    box.appendChild(row);
+  });
+}
+
+function promoMsg(text, ok){
+  const m=$('#promoMsg'); m.textContent=text;
+  m.style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+function redeemPromo(){
+  if(game.running) return;
+  const raw=$('#promoInput').value.trim().toLowerCase();
+  if(!raw){ promoMsg('Введите промокод', false); return; }
+  const promo=PROMOS[raw];
+  if(!promo){ promoMsg('Такого промокода нет', false); return; }
+  if(game.usedPromos.includes(raw)){ promoMsg('Этот промокод уже использован', false); return; }
+  if(promo.reward==='pick10'){
+    if(freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
+    addPickToGrid(10);
+  }
+  game.usedPromos.push(raw);
+  audioInit(); sfxGift();
+  promoMsg('Промокод принят: '+promo.label+'!', true);
+  $('#promoInput').value='';
+  refreshUI();
+}
+
+// "update available" note — shown once, then remembered in the save
+function maybeShowUpdateNote(){
+  if(game.seenUpdate) return;
+  openModal('updateNote');
+}
+function dismissUpdateNote(){
+  closeModal('updateNote');
+  game.seenUpdate=true;
+  save();
+}
+
+/* =========================================================
    BOOT
    ========================================================= */
 function boot(){
   buildTextures();
   $('#coinIcon').src=TEX.coin;
   buildGrid();
+
+  load();                       // restore saved progress (no-op on first run)
+
+  // ---- core controls ----
   $('#buyBtn').addEventListener('click',buyPick);
+  $('#bulkBtn').addEventListener('click',bulkBuy);
   $('#launchBtn').addEventListener('click',launch);
   $('#bannerBtn').addEventListener('click',onBannerNext);
-  newLevel(1);
+
+  // ---- top-right actions ----
+  $('#updatesBtn').addEventListener('click',()=>openModal('updatesModal'));
+  $('#promoBtn').addEventListener('click',()=>{ promoMsg('',true); openModal('promoModal'); });
+
+  // ---- promo modal ----
+  $('#promoRedeem').addEventListener('click',redeemPromo);
+  $('#promoInput').addEventListener('keydown',e=>{ if(e.key==='Enter') redeemPromo(); });
+
+  // ---- update note ----
+  $('#noteOpen').addEventListener('click',()=>{ dismissUpdateNote(); openModal('updatesModal'); });
+
+  // ---- generic modal close (buttons + backdrop) ----
+  $$('[data-close]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.close;
+    if(id==='updateNote') dismissUpdateNote(); else closeModal(id);
+  }));
+  $$('.modal').forEach(m=>m.addEventListener('pointerdown',e=>{
+    if(e.target!==m) return;                 // only when clicking the dim backdrop
+    if(m.id==='updateNote') dismissUpdateNote(); else closeModal(m.id);
+  }));
+
+  renderChangelog();
+  newLevel(game.level);          // build the dig field for the saved/initial level
+  renderAllSlots();              // paint any restored picks into the grid
   refreshUI();
+  maybeShowUpdateNote();         // one-time "update available" note
 }
 
 boot();
