@@ -129,27 +129,14 @@
   .trashPick.gone{opacity:0; transform:scale(.4) translateY(10px); transition:all .3s ease;}
 
   /* ---------- CONTROLS ---------- */
-  /* the whole row is one button tall: left column = buy stacked over buy-all
-     (each shrinks to half), right = launch filling the same height */
-  #controls{display:flex; gap:10px; align-items:stretch; height:58px; flex:0 0 auto;}
-  #buyStack{flex:1; display:flex; flex-direction:column; gap:6px; min-width:0;}
-  #launchBtn{flex:1; display:flex; align-items:center; justify-content:center;}
-  /* the two stacked buy buttons split the column → compact, single line */
-  #buyStack .btn{
-    flex:1 1 0; min-height:0; padding:2px 8px;
-    border-width:2px; border-radius:11px; box-shadow:0 3px 0 0 #0c0e12;
-    white-space:nowrap; overflow:hidden;
-    display:flex; align-items:center; justify-content:center; gap:5px;
-  }
-  #buyStack .btn:active{transform:translateY(3px); box-shadow:0 0 0 0 #0c0e12;}
-  .btn .pr{font-size:9px; font-weight:700; opacity:.82; text-transform:none; letter-spacing:0;}
-  .btn.buy.alt{background:linear-gradient(#f0cf86,#c59a3e);}   /* buy-all: lighter gold to set it apart */
+  #controls{display:flex; gap:10px;}
   .btn{
-    flex:1; padding:13px 6px; font-family:inherit; font-weight:700; font-size:13px;
+    flex:1; padding:14px 6px; font-family:inherit; font-weight:700; font-size:14px;
     color:#22262e; cursor:pointer; letter-spacing:1px;
     border:3px solid var(--frame); position:relative; line-height:1.15;
     text-transform:uppercase; border-radius:16px;
     box-shadow:0 5px 0 0 #0c0e12; transition:transform .06s, box-shadow .06s;
+    touch-action:manipulation;          /* no double-tap zoom on rapid taps */
   }
   .btn small{display:block; font-size:10px; opacity:.82; font-weight:700;}
   .btn:active{transform:translateY(4px); box-shadow:0 1px 0 0 #0c0e12;}
@@ -211,6 +198,7 @@
   .blk .crack{position:absolute; inset:0; background-size:100% 100%; opacity:0; image-rendering:pixelated;}
   .digger{
     position:absolute; left:0; width:100%; z-index:6; pointer-events:none;
+    transition:top .15s ease-in;          /* drop smoothly onto the next block when one breaks */
   }
   /* every pick is full size; multiple picks just overlap (fanned via inline left) */
   .punit{position:absolute; top:0; width:74%; margin-left:-37%;}
@@ -313,6 +301,7 @@
   #headerRow #title{flex:1 1 auto; padding:2px 0;}
   #topActions{flex:0 0 60px; display:flex; flex-direction:column; gap:5px;}
   .iconBtn{
+    position:relative;
     display:flex; flex-direction:column; align-items:center; gap:2px;
     width:100%; padding:5px 3px; line-height:1; cursor:pointer;
     font-family:inherit; font-weight:700; font-size:8px; letter-spacing:.2px;
@@ -320,10 +309,20 @@
     border:2px solid var(--frame); border-radius:9px;
     box-shadow:inset 0 0 0 2px var(--frame2), 0 3px 0 #05030a;
     transition:transform .06s, box-shadow .06s;
+    touch-action:manipulation;          /* no double-tap zoom */
   }
   .iconBtn:active{transform:translateY(2px); box-shadow:inset 0 0 0 2px var(--frame2), 0 1px 0 #05030a;}
   .iconBtn .ic{font-size:15px; line-height:1;}
   .iconBtn .lb{white-space:nowrap;}
+  /* "!" badge when a quest reward is ready */
+  .iconBtn.hasClaim::after{
+    content:"!"; position:absolute; top:-5px; right:-5px;
+    width:15px; height:15px; border-radius:50%;
+    background:var(--red); color:#fff; font-size:10px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #1a0c10; box-shadow:0 1px 0 #0008;
+    animation:lvPulse 1s ease-in-out infinite;
+  }
 
   /* ---------- MODALS ---------- */
   .modal{
@@ -333,11 +332,23 @@
   }
   .modal.show{display:flex; animation:fadeIn .25s ease;}
   .modalBox{
+    position:relative;
     width:100%; max-width:360px; max-height:86vh; overflow-y:auto;
     padding:20px 18px; text-align:center; background:var(--panel);
     border:3px solid var(--frame);
     box-shadow:inset 0 0 0 3px var(--frame2), 0 8px 0 #05030a;
   }
+  /* top-left close cross */
+  .modalX{
+    position:absolute; top:9px; left:9px; z-index:3;
+    width:30px; height:30px; padding:0; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    font-family:inherit; font-size:15px; font-weight:800; color:var(--ink);
+    background:var(--panel2); border:2px solid var(--frame); border-radius:8px;
+    box-shadow:inset 0 0 0 2px var(--frame2), 0 2px 0 #05030a;
+    cursor:pointer; touch-action:manipulation;
+  }
+  .modalX:active{transform:translateY(2px); box-shadow:inset 0 0 0 2px var(--frame2), 0 0 0 #05030a;}
   .modalHead{display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:14px;}
   .modalIcon{font-size:22px; line-height:1;}
   .modalBox h2{
@@ -413,6 +424,74 @@
   .promoMsg{min-height:16px; font-size:12px; margin-top:10px; font-weight:700;}
   .noteBtns{display:flex; flex-direction:column; gap:8px;}
 
+  /* ---------- level-12 glow ---------- */
+  .glowAura{
+    position:absolute; inset:-22%; border-radius:50%; pointer-events:none; z-index:0;
+    background:radial-gradient(circle, rgba(255,150,40,.6) 0%, rgba(255,120,20,0) 68%);
+    animation:auraPulse 1.1s ease-in-out infinite;
+  }
+  .pick.glow12 img, .punit.glow12 img{ position:relative; z-index:1; }
+  @keyframes auraPulse{
+    0%,100%{opacity:.5;  transform:scale(.9);}
+    50%    {opacity:1;   transform:scale(1.18);}
+  }
+
+  /* ---------- explosion blast ---------- */
+  .blast{
+    position:absolute; transform:translate(-50%,-50%); z-index:14; pointer-events:none; border-radius:50%;
+    background:radial-gradient(circle, #fff6c0 0%, #ffae3a 32%, #ff5a18 55%, rgba(255,60,10,0) 72%);
+    animation:blastPop .5s ease-out forwards;
+  }
+  @keyframes blastPop{
+    0%  {opacity:0; transform:translate(-50%,-50%) scale(.3);}
+    25% {opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(1.1);}
+  }
+
+  /* ---------- coin rain from the chest ---------- */
+  .coinRain{
+    position:absolute; width:20px; height:20px; image-rendering:pixelated; z-index:18;
+    pointer-events:none;
+    animation-name:coinFountain; animation-timing-function:cubic-bezier(.2,.7,.5,1); animation-fill-mode:forwards;
+  }
+  /* burst UP and outward out of the chest, then fade */
+  @keyframes coinFountain{
+    0%  {opacity:0; transform:translate(-50%,0) rotate(0);}
+    15% {opacity:1;}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), var(--up)) rotate(var(--rot));}
+  }
+
+  /* ---------- quests modal (green objectives) ---------- */
+  .modalBox.questsBox{
+    background:linear-gradient(180deg,#243528,#1b2620);
+    box-shadow:inset 0 0 0 3px #2f5a3e, 0 8px 0 #05030a;
+  }
+  .questsBox h2{color:#9fe8b4; text-shadow:0 2px 0 #1c5a34,0 4px 0 #0c2a18;}
+  .questsBox .modalIcon{filter:drop-shadow(0 0 6px #6fe0a0);}
+  .questsBox .modalSub{color:#bcd8c6;}
+  #questList{text-align:left; display:flex; flex-direction:column; gap:9px; margin-bottom:16px;}
+  .questItem{
+    padding:9px 11px; background:#1e2a22; border:2px solid #11251a; border-radius:9px;
+    box-shadow:inset 0 0 0 2px #2c4636;
+  }
+  .questItem.ready{box-shadow:inset 0 0 0 2px #3f7a52, 0 0 9px #2c8c4e66; border-color:#1c3a26;}
+  .questItem.claimed{opacity:.5;}
+  .qTop{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .qTitle{font-size:12px; color:var(--ink); font-weight:700;}
+  .qReward{font-size:12px; color:var(--gold); font-weight:800; white-space:nowrap;}
+  .qBarTrack{height:8px; background:#0b0f0c; border:1px solid #2c4636; border-radius:5px; overflow:hidden; margin:6px 0 5px;}
+  .qBar{height:100%; background:linear-gradient(var(--green),var(--green-d)); transition:width .3s;}
+  .qBot{display:flex; justify-content:space-between; align-items:center;}
+  .qProg{font-size:10px; color:var(--ink-dim); letter-spacing:.5px;}
+  .qGot{font-size:10px; color:var(--green); font-weight:700;}
+  .qClaim{
+    font-family:inherit; font-weight:800; font-size:10px; letter-spacing:.5px; text-transform:uppercase;
+    color:#06210a; padding:5px 12px; border:2px solid var(--frame); border-radius:8px; cursor:pointer;
+    background:linear-gradient(var(--green),var(--green-d)); box-shadow:0 3px 0 #0c1a12; touch-action:manipulation;
+  }
+  .qClaim:active{transform:translateY(2px); box-shadow:0 1px 0 #0c1a12;}
+  .qClaim:disabled{background:#2a3530; color:#5a6660; cursor:not-allowed; box-shadow:0 3px 0 #0c1a12; border-color:#1a241e;}
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -425,6 +504,7 @@
       <div id="title">MIX BRICKS</div>
       <div id="topActions">
         <button class="iconBtn" id="updatesBtn"><span class="ic">📋</span><span class="lb">Обновления</span></button>
+        <button class="iconBtn" id="questsBtn"><span class="ic">🎯</span><span class="lb">Задания</span></button>
         <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
       </div>
     </div>
@@ -442,10 +522,7 @@
   </div>
 
   <div id="controls">
-    <div id="buyStack">
-      <button class="btn buy" id="buyBtn">КУПИТЬ</button>
-      <button class="btn buy alt" id="bulkBtn">КУПИТЬ ВСЁ</button>
-    </div>
+    <button class="btn buy" id="buyBtn">КУПИТЬ</button>
     <button class="btn go" id="launchBtn">ЗАПУСТИТЬ</button>
   </div>
 
@@ -508,6 +585,15 @@
     <button class="btn buy" id="noteOpen">СПИСОК ОБНОВЛЕНИЙ</button>
     <button class="btn go modalDone" data-close="updateNote">ОК</button>
   </div>
+</div></div>
+
+<!-- quests (green objectives theme) -->
+<div class="modal" id="questsModal"><div class="modalBox questsBox">
+  <button class="modalX" data-close="questsModal" aria-label="Закрыть">✕</button>
+  <div class="modalHead"><span class="modalIcon">🎯</span><h2>ЗАДАНИЯ</h2></div>
+  <p class="modalSub">Выполняй цели и забирай награды монетами.</p>
+  <div id="questList"></div>
+  <button class="btn go modalDone" data-close="questsModal">ЗАКРЫТЬ</button>
 </div></div>
 
 <script>
@@ -605,57 +691,96 @@ function noiseHit(dur=0.07,vol=0.13,delay=0){
   src.connect(f); f.connect(g); g.connect(actx.destination);
   src.start(t0);
 }
+// low-passed noise burst → a soft "boom" for explosions
+function boom(dur=0.26,vol=0.24){
+  if(!actx) return;
+  const t0=actx.currentTime;
+  const n=Math.max(1,Math.floor(actx.sampleRate*dur));
+  const buf=actx.createBuffer(1,n,actx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+  const src=actx.createBufferSource(); src.buffer=buf;
+  const f=actx.createBiquadFilter(); f.type='lowpass';
+  f.frequency.setValueAtTime(1100,t0); f.frequency.exponentialRampToValueAtTime(110,t0+dur);
+  const g=actx.createGain(); g.gain.value=vol;
+  src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t0);
+}
 let _lastDig=0;
-function sfxDig(){
+function sfxDig(){                                  // soft chip into the ground
   if(!actx) return;
   const now=performance.now();
   if(now-_lastDig<45) return; _lastDig=now;
-  noiseHit(0.06,0.11);
-  tone(170+Math.random()*40,0.05,'square',0.07,110);
+  noiseHit(0.05,0.08);
+  tone(150+Math.random()*30,0.05,'square',0.05,90);
 }
-function sfxMerge(){
-  tone(440,0.10,'triangle',0.15,660);
-  tone(660,0.13,'triangle',0.13,900,0.07);
+function sfxMerge(){                                // satisfying rising "pop"
+  tone(523,0.09,'triangle',0.16,784);
+  tone(784,0.12,'triangle',0.12,1046,0.06);
 }
-function sfxBuy(){ tone(320,0.07,'square',0.12,460); }
-function sfxGift(){ tone(784,0.12,'triangle',0.16,1175); tone(1175,0.14,'triangle',0.12,1568,0.06); }
-function sfxComplete(){
-  [523,659,784,1046].forEach((f,i)=>tone(f,0.18,'triangle',0.15,null,i*0.10));
+function sfxBuy(){                                  // quick coin clink
+  tone(680,0.05,'square',0.10,900);
+  tone(1000,0.06,'square',0.07,1320,0.05);
 }
+function sfxGift(){                                 // bright treasure chime
+  [784,1046,1318].forEach((f,i)=>tone(f,0.14,'triangle',0.15,null,i*0.05));
+  tone(1568,0.18,'triangle',0.09,2093,0.16);
+}
+function sfxComplete(){                             // level-clear fanfare
+  [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.2,'triangle',0.15,null,i*0.09));
+}
+function sfxExplode(){                              // lvl-12 detonation
+  boom(0.28,0.26);
+  tone(160,0.22,'sawtooth',0.14,44);
+}
+function sfxReward(){                               // promo / quest claim shimmer
+  [659,880,1109,1318].forEach((f,i)=>tone(f,0.15,'triangle',0.13,null,i*0.06));
+  tone(1760,0.22,'sine',0.07,2637,0.22);
+}
+function sfxCoin(){ tone(1046,0.05,'triangle',0.06,1568); }   // single coin tick
 
 /* =========================================================
    BLOCK + PICK DEFINITIONS
    ========================================================= */
+// coin payouts cut ~3× for a slower economy (longer game)
 const BLOCKS = {
   earth: {name:'Земля',   coins:1,  hp:3,  wear:1, seed:11,
           pal:['#8a6238','#7a5733','#6b4a2b','#5a3d22','#4a3119'], speck:['#4a3119','#3a2614'], speckN:6},
-  stone: {name:'Камень',  coins:2,  hp:9,  wear:2, seed:23,
+  stone: {name:'Камень',  coins:1,  hp:9,  wear:2, seed:23,
           pal:['#9a9aa6','#8a8a95','#75757f','#616169','#4f4f57']},
-  copper:{name:'Медь',    coins:4,  hp:15, wear:3, seed:37,
+  copper:{name:'Медь',    coins:1,  hp:15, wear:3, seed:37,
           pal:['#8a8a95','#75757f','#616169','#4f4f57'], speck:['#e0883c','#b8621f'], speckN:14},
-  iron:  {name:'Железо',  coins:7,  hp:22, wear:4, seed:51,
+  iron:  {name:'Железо',  coins:2,  hp:22, wear:4, seed:51,
           pal:['#7a7a82','#6a6a72','#56565e','#46464e'], speck:['#ecd6b4','#b89a78'], speckN:13},
-  gold:  {name:'Золото',  coins:12, hp:30, wear:6, seed:67,
+  gold:  {name:'Золото',  coins:3,  hp:30, wear:6, seed:67,
           pal:['#6a6a72','#5a5a62','#4a4a52','#3c3c44'], speck:['#ffd23f','#caa11f'], speckN:16},
-  gem:   {name:'Кристалл',coins:20, hp:42, wear:8, seed:83,
+  gem:   {name:'Кристалл',coins:4,  hp:42, wear:8, seed:83,
           pal:['#3a2f52','#2f2744','#262038','#1d182c'], speck:['#54e8ff','#2aa8d8'], speckN:18},
 };
 const BLOCK_ORDER = ['earth','stone','copper','iron','gold','gem'];
 
-// distinct colour per pick level 1..11  [light, mid, dark]  (no pink)
+// material/colour per pick level 1..12  [light, mid, dark]  (no pink)
+// 1 wood · 2 stone · 3 iron · 4 gold · then gems
 const METAL = {
-  1:['#e8e8f0','#a8a8b8','#5c5c68'],   // silver
-  2:['#ff8a6a','#e23a1a','#8a1808'],   // red
-  3:['#ffc860','#f09810','#9a5e08'],   // orange
+  1:['#c8944e','#94632c','#5a3814'],   // wood
+  2:['#b4aea4','#86807a','#4e4a44'],   // stone
+  3:['#dfe6f0','#9eaabd','#586278'],   // iron (steel)
   4:['#fff080','#e8c818','#8a7008'],   // gold
-  5:['#c8f060','#88c820','#4a7010'],   // lime
-  6:['#70e890','#22c050','#106830'],   // green
-  7:['#70f0e0','#1ec0a8','#0e7060'],   // teal
-  8:['#78d0ff','#22a0e8','#0e6088'],   // cyan
-  9:['#88a0ff','#3850e8','#1c2888'],   // blue
- 10:['#b89aff','#7038d8','#3a1480'],   // violet
- 11:['#ffffff','#bfe0ff','#5f7fb0'],   // diamond (top tier)
+  5:['#8ef0a8','#28c060','#0e6030'],   // emerald
+  6:['#70f0e0','#1ec0a8','#0e7060'],   // teal
+  7:['#88dcff','#28a8e8','#0e6088'],   // cyan
+  8:['#90a8ff','#3858e8','#1c2c90'],   // sapphire
+  9:['#c4a4ff','#7838e0','#3a1488'],   // amethyst
+ 10:['#ff9a8a','#e83a2a','#8a1810'],   // ruby
+ 11:['#ffffff','#c8e8ff','#7090b8'],   // diamond
+ 12:['#ffd27a','#ff6a18','#8a2a06'],   // molten (explosive top tier)
 };
+// blend a hex colour toward white for a highlight tone
+function lighten(hex, amt=0.5){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.round(r+(255-r)*amt); g=Math.round(g+(255-g)*amt); b=Math.round(b+(255-b)*amt);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
 
 const PICK_ROWS = [
  ".......MM.......",
@@ -753,11 +878,14 @@ function buildTextures(){
    ========================================================= */
 const SLOTS = 15;            // 5 x 3 merge field
 const LANES = 5;             // dig lanes = merge columns (always 5)
-const TIER1 = 50;            // purchases 1..50 stay level 1 (50th is still level 1)
-const TIER_STEP = 100;       // each further level needs +100 purchases (count resets)
 const BASE_PRICE = 5;
-const MAX_LEVEL = 11;        // highest pick level
+const MAX_LEVEL = 12;        // highest pick level (12 = explosive diamond)
 const MAX_GAME_LEVEL = 10;   // the game has 10 dig levels in total
+// purchases needed WITHIN each tier to reach the next pick level:
+// L1→2:50, 2→3:150, 3→4:250, 4→5:350, 5→6:600, then steeper
+const TIER_LENS = [50,150,250,350,600,800,1000,1300,1600,2000,2500];
+// cumulative purchase count at which each tier ENDS (level-up boundary)
+const TIER_ENDS = (()=>{ const a=[]; let s=0; for(const len of TIER_LENS){ s+=len; a.push(s); } return a; })();
 
 const game = {
   coins:10,
@@ -767,53 +895,60 @@ const game = {
   running:false,
   runCoins:0,
   usedPromos:[],     // promo codes already redeemed
-  seenUpdate:false,  // whether the "update available" note was shown
+  seenUpdate:'',     // version of the last "update available" note seen
+  stats:{blocksDug:0, merges:0, levelsWon:0},  // lifetime totals for quests
+  claimedQuests:[],  // quest ids already claimed
 };
 
 function pickPower(lv){ return lv; }
 function pickMaxQ(lv){ return 45 + lv*30; }
-// level of the n-th purchase (1-based): 1..50 → lvl1, 51..150 → lvl2, then +100 per level
+// level of the n-th purchase (1-based), using the cumulative tier thresholds
 function levelForPurchase(n){
-  if(n<=TIER1) return 1;
-  return Math.min(MAX_LEVEL, 2 + Math.floor((n-TIER1-1)/TIER_STEP));
+  let lvl=1;
+  for(const end of TIER_ENDS){ if(n>end) lvl++; else break; }
+  return Math.min(MAX_LEVEL, lvl);
 }
 function buyLevel(){ return levelForPurchase(game.purchases+1); }   // level of the NEXT pick
 function buyPrice(){ return Math.round(BASE_PRICE * Math.pow(1.5, buyLevel()-1)); }
-// progress toward the next level-up (the counter resets after each tier)
+// progress toward the next level-up (how far through the current tier we are)
 function tierState(){
   const p=game.purchases;
-  if(p<TIER1) return {inTier:p, tierLen:TIER1, nextLevel:2};
-  const over=p-TIER1, k=Math.floor(over/TIER_STEP);
-  return {inTier:over-k*TIER_STEP, tierLen:TIER_STEP, nextLevel:Math.min(MAX_LEVEL,3+k)};
-}
-// how many picks a single bulk purchase would buy, and the total cost,
-// honouring both the player's balance and the number of free slots
-function planBulkBuy(){
-  let coins=game.coins, purchases=game.purchases, slots=freeSlots().length;
-  let count=0, cost=0;
-  while(slots>0){
-    const lv=levelForPurchase(purchases+1);
-    const price=Math.round(BASE_PRICE*Math.pow(1.5,lv-1));
-    if(coins<price) break;
-    coins-=price; purchases++; slots--; count++; cost+=price;
-  }
-  return {count, cost};
+  const lvl=buyLevel();
+  if(lvl>=MAX_LEVEL) return {inTier:1, tierLen:1, nextLevel:MAX_LEVEL, max:true};
+  const start = lvl===1 ? 0 : TIER_ENDS[lvl-2];
+  const end   = TIER_ENDS[lvl-1];
+  return {inTier:p-start, tierLen:end-start, nextLevel:lvl+1, max:false};
 }
 
 /* =========================================================
    CONTENT  (changelog + promo codes)
    ========================================================= */
-// newest entry first — rendered top-to-bottom in the updates list
+// entries are sorted by date when rendered (oldest on top, newest at the bottom)
 const CHANGELOG = [
-  {date:'07.06.2026', title:'пак улучшений',
-   text:'добавлен список обновлений и новый дизайн окон, покупка кирок стала проще. Добавлен 11-й уровень кирки, монетки стали красивее. Система промокодов доступна — введите промокод «Update2» и получите кирку 10 уровня!'},
   {date:'31.05.2026', title:'релиз',
    text:'игра доступна!'},
+  {date:'07.06.2026', title:'пак улучшений',
+   text:'добавлен список обновлений и новый дизайн окон, покупка кирок стала проще. Добавлен 11-й уровень кирки, монетки стали красивее. Появилась система промокодов.'},
+  {date:'08.06.2026', title:'масштабный протокол',
+   text:'переработан баланс: экономика медленнее (монет ~×3 меньше), уровни длиннее, новые пороги улучшений (50→150→250→350→600), награда из сундука до 50. Добавлена кирка 12 уровня — взрывает 3×2 блока и светится. Новый промокод «Balance» (кирка 5 уровня). Добавлены задания с наградами, дождь монет из сундука, новые звуки. Кнопку «Купить всё» убрали, исправлен зум при быстрых нажатиях.'},
 ];
-// keys are stored lower-case; matching is case-insensitive
+// the newest changelog date — bump to re-show the "update available" note
+const LATEST_UPDATE = '08.06.2026';
+// promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
-  'update2': {reward:'pick10', label:'Кирка 10 уровня'},
+  'balance': {level:5, label:'Кирка 5 уровня'},
 };
+// quests — lifetime goals, rewards 10–70 coins
+const QUESTS = [
+  {id:'dig200',  title:'Вскопать 200 блоков',  stat:'blocksDug', target:200,  reward:25},
+  {id:'dig800',  title:'Вскопать 800 блоков',  stat:'blocksDug', target:800,  reward:45},
+  {id:'dig3000', title:'Вскопать 3000 блоков', stat:'blocksDug', target:3000, reward:70},
+  {id:'buy60',   title:'Купить 60 кирок',       stat:'purchases', target:60,   reward:30},
+  {id:'merge30', title:'Скрестить 30 кирок',    stat:'merges',    target:30,   reward:35},
+  {id:'win3',    title:'Пройти 3 уровня',        stat:'levelsWon', target:3,    reward:40},
+  {id:'win10',   title:'Пройти все 10 уровней',  stat:'levelsWon', target:10,   reward:70},
+];
+function questStat(stat){ return stat==='purchases' ? game.purchases : (game.stats[stat]||0); }
 
 /* =========================================================
    SAVE  (localStorage persistence)
@@ -830,6 +965,8 @@ function save(){
       level:game.level,
       usedPromos:game.usedPromos,
       seenUpdate:game.seenUpdate,
+      stats:game.stats,
+      claimedQuests:game.claimedQuests,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -844,7 +981,11 @@ function load(){
                         ? s.grid.map(c => (c && Number.isFinite(c.level)) ? {level:c.level} : null)
                         : new Array(SLOTS).fill(null);
     game.usedPromos = Array.isArray(s.usedPromos) ? s.usedPromos.filter(x=>typeof x==='string') : [];
-    game.seenUpdate = !!s.seenUpdate;
+    game.seenUpdate = typeof s.seenUpdate==='string' ? s.seenUpdate : '';   // old boolean → show new note
+    game.stats = (s.stats && typeof s.stats==='object')
+      ? {blocksDug:s.stats.blocksDug||0, merges:s.stats.merges||0, levelsWon:s.stats.levelsWon||0}
+      : {blocksDug:0, merges:0, levelsWon:0};
+    game.claimedQuests = Array.isArray(s.claimedQuests) ? s.claimedQuests.filter(x=>typeof x==='string') : [];
     return true;
   }catch(e){ return false; }
 }
@@ -866,28 +1007,11 @@ function renderBuyBtn(){
   btn.disabled = game.running || game.coins<price || freeSlots().length===0;
   btn.textContent = 'КУПИТЬ';
 }
-function renderBulkBtn(){
-  const btn=$('#bulkBtn'); if(!btn) return;
-  const plan=planBulkBuy();
-  // only show when the player can afford MORE THAN ONE pick
-  const show = !game.running && plan.count>=2;
-  btn.style.display = show ? '' : 'none';
-  btn.disabled = !show;
-  if(show) btn.textContent = 'КУПИТЬ ВСЁ';
-}
-// Russian plural ending on the stem «кирк»: 1→кирка, 2-4→кирки, else→кирок
-function plural(n){
-  const a=Math.abs(n)%100, b=a%10;
-  if(a>=11&&a<=14) return 'ок';  // 11..14 → «кирок»
-  if(b===1) return 'а';          // 1,21,31 → «кирка»
-  if(b>=2&&b<=4) return 'и';     // 2,3,4 → «кирки»
-  return 'ок';                   // 0,5..9 → «кирок»
-}
 function renderLaunchBtn(){
   const has=game.grid.some(Boolean);
   $('#launchBtn').disabled = game.running || !has;
 }
-function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderBulkBtn(); renderLaunchBtn(); save(); }
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); renderQuestBadge(); save(); }
 
 let toastTimer=null;
 function toast(msg, ms=1700){
@@ -910,9 +1034,10 @@ function buildGrid(){
 function freeSlots(){ const f=[]; for(let i=0;i<SLOTS;i++) if(!game.grid[i]) f.push(i); return f; }
 
 function makePickEl(level){
-  const p=document.createElement('div'); p.className='pick spawn';
+  const p=document.createElement('div'); p.className='pick spawn'+(level>=12?' glow12':'');
   const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
   const lv=document.createElement('span'); lv.className='lv'; lv.textContent=level;
+  if(level>=12){ const a=document.createElement('div'); a.className='glowAura'; p.appendChild(a); }
   p.appendChild(img); p.appendChild(lv);
   p.addEventListener('pointerdown',onPickDown);
   setTimeout(()=>p.classList.remove('spawn'),300);
@@ -946,29 +1071,6 @@ function buyPick(){
   addPickToGrid(lv);
   sfxBuy();
   if(buyLevel()>lv) toast(`Теперь покупаются кирки ур.${buyLevel()}!`);
-  refreshUI();
-}
-
-/* ---- buy as many as the balance + free slots allow ---- */
-function bulkBuy(){
-  if(game.running) return;
-  const plan=planBulkBuy();
-  if(plan.count===0){
-    toast(freeSlots().length===0 ? 'Нет свободного места' : 'Недостаточно монет');
-    return;
-  }
-  audioInit();
-  const startLv=buyLevel();
-  for(let k=0;k<plan.count;k++){
-    const lv=buyLevel();
-    game.coins-=buyPrice();
-    game.purchases++;
-    addPickToGrid(lv);
-  }
-  sfxBuy();
-  const endLv=buyLevel();
-  toast(`Куплено: ${plan.count} кирк${plural(plan.count)} за ${plan.cost} мон.`);
-  if(endLv>startLv) setTimeout(()=>toast(`Теперь покупаются кирки ур.${endLv}!`),900);
   refreshUI();
 }
 
@@ -1051,6 +1153,7 @@ function onPickUp(e){
       const a=game.grid[from], b=game.grid[ti];
       if(b && a.level===b.level && b.level<MAX_LEVEL){       // MERGE
         game.grid[ti]={level:b.level+1}; game.grid[from]=null;
+        game.stats.merges++;                                  // for quests
         renderSlot(from); renderSlot(ti);
         const np=$('.pick',slotEls[ti]); if(np){ np.classList.add('merging'); setTimeout(()=>np.classList.remove('merging'),300); }
         sfxMerge();
@@ -1116,20 +1219,23 @@ function makeRng(seed){
     t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
 }
 function makeDig(n){
-  const terrain = 14 + (n-1)*3;       // depth grows with level
+  // levels 9-10 are "boss" levels: much deeper and built of tougher ore
+  const extra = n>=9 ? (n-8)*8 : 0;      // 9 → +8 rows, 10 → +16 rows
+  const bias  = n>=9 ? (n-8)   : 0;      // 9 → +1 tier, 10 → +2 tier (harder blocks)
+  const terrain = 18 + (n-1)*5 + extra;
   const rng = makeRng((n*2654435761)>>>0);
   const strataCols=[];                 // fixed per level, generated once here
-  for(let li=0;li<LANES;li++) strataCols.push(laneStrata(terrain,rng));
+  for(let li=0;li<LANES;li++) strataCols.push(laneStrata(terrain,rng,bias));
   return {terrain, giftRow:terrain, rows:terrain+1, blockH:72, worldH:0,
           strataCols, lanes:[], runners:[], lead:null, timer:null, _lastY:null};
 }
 // each lane gets its OWN ore column (richer deeper, but noisy)
-function laneStrata(terrain,rng){
+function laneStrata(terrain,rng,bias=0){
   const rnd = rng || Math.random;
   const out=[];
   for(let r=0;r<terrain;r++){
     const f=r/terrain;                                // 0 (top) .. ~1 (deep)
-    let tier=Math.round(f*5 + (rnd()-0.5)*1.6);       // noise breaks up bands
+    let tier=Math.round(f*5 + (rnd()-0.5)*1.6 + bias); // bias pushes toward tougher ore
     out.push(BLOCK_ORDER[clamp(tier,0,5)]);
   }
   out.push('gift');
@@ -1160,7 +1266,7 @@ function makeRunner(laneIdx, levels){
   const restTop=Math.round(-dig.blockH*0.74 + 12);  // sit ON the block, not inside it
   const picks=[];
   levels.forEach((lv,i)=>{
-    const u=document.createElement('div'); u.className='punit';
+    const u=document.createElement('div'); u.className='punit'+(lv>=12?' glow12':'');
     u.style.left=(50+(i-(n-1)/2)*16)+'%';     // same size, fanned (overlap ok)
     u.style.top=restTop+'px';
     u.style.zIndex=String(10+i);
@@ -1168,6 +1274,7 @@ function makeRunner(laneIdx, levels){
     q.style.top=(-8-i*7)+'px';                 // stack health bars so each is visible
     const qi=document.createElement('i'); q.appendChild(qi);
     const img=document.createElement('img'); img.src=TEX.picks[lv]; img.alt='';
+    if(lv>=12){ const a=document.createElement('div'); a.className='glowAura'; u.appendChild(a); }
     u.appendChild(q); u.appendChild(img);
     el.appendChild(u);
     picks.push({level:lv,power:pickPower(lv),maxQ:pickMaxQ(lv),
@@ -1272,14 +1379,69 @@ function coinFx(laneEl,row,val){
   f.style.top=(row*dig.blockH+4)+'px';
   laneEl.appendChild(f); setTimeout(()=>f.remove(),800);
 }
-function breakBlock(lane,row,b){
+function breakBlock(lane,row,b,silent){
   if(b.broken) return; b.broken=true;
   b.el.classList.add('breaking');
   setTimeout(()=>b.el.classList.add('broken'),110);
   game.coins+=b.coins; game.runCoins+=b.coins;
   if(b.coins>0) coinFx(lane.el,row,b.coins);
+  game.stats.blocksDug++;
   renderCoins();
-  sfxDig();
+  if(!silent) sfxDig();
+}
+// lvl-12 ability: detonate a 3-wide × 2-tall patch of blocks around (centerLane,row)
+function explodeAt(centerLane,row){
+  for(let dl=-1;dl<=1;dl++){
+    const li=centerLane+dl; if(li<0||li>=LANES) continue;
+    const lane=dig.lanes[li]; if(!lane) continue;
+    for(let dr=0;dr<=1;dr++){
+      const rr=row+dr; if(rr<0||rr>=dig.giftRow) continue;   // never destroy the gift row
+      const blk=lane.blocks[rr];
+      if(blk && !blk.broken && blk.key!=='gift') breakBlock(lane,rr,blk,true);
+    }
+  }
+  spawnBlast(centerLane,row);
+  sfxExplode();
+}
+function spawnBlast(centerLane,row){
+  const lane=dig.lanes[centerLane]; if(!lane) return;
+  const f=document.createElement('div'); f.className='blast';
+  f.style.left='50%';
+  f.style.top=((row+1)*dig.blockH)+'px';
+  f.style.width=(dig.blockH*3.1)+'px'; f.style.height=(dig.blockH*2.2)+'px';
+  lane.el.appendChild(f);
+  setTimeout(()=>f.remove(),520);
+}
+// a golden fountain bursting UP out of the chest (~2s)
+function coinRain(laneEl,giftRow){
+  const top=giftRow*dig.blockH;
+  for(let i=0;i<18;i++){
+    const c=document.createElement('img'); c.className='coinRain'; c.src=TEX.coin; c.alt='';
+    const dx=(Math.random()*2-1)*dig.blockH*1.7;        // spread sideways
+    const up=-dig.blockH*(1.4+Math.random()*1.9);       // shoot UP out of the chest
+    const rot=(Math.random()*2-1)*260;
+    const dur=0.9+Math.random()*0.6, delay=Math.random()*0.5;
+    c.style.cssText=`left:${32+Math.random()*36}%; top:${top+dig.blockH*0.35}px; --dx:${dx}px; --up:${up}px; --rot:${rot}deg; animation-duration:${dur}s; animation-delay:${delay}s;`;
+    laneEl.appendChild(c);
+    setTimeout(()=>c.remove(),(dur+delay)*1000+200);
+  }
+  for(let i=0;i<5;i++) setTimeout(sfxCoin,i*150);
+}
+// move a runner down to the next row; reaching the gift ends its run
+function advanceRunner(run){
+  const next=run.row+1;
+  if(next>=dig.giftRow){
+    run.row=dig.giftRow; run.el.style.top=(run.row*dig.blockH)+'px';
+    run.finished=true; run.reachedGift=true;
+    run.el.classList.remove('swing','lead'); run.el.classList.add('won');
+    onReachGift(run);
+  } else {
+    run.row=next; run.el.style.top=(run.row*dig.blockH)+'px';
+  }
+}
+function onReachGift(run){
+  sfxGift();
+  if(run.picks.some(p=>p.level>=12)) explodeAt(run.lane, dig.giftRow-2);  // lvl-12 finisher blast
 }
 function tick(){
   if(!dig||!game.running) return;
@@ -1292,13 +1454,14 @@ function tick(){
     const lane=dig.lanes[run.lane];
     const b=lane.blocks[run.row];
     if(!b){ run.finished=true; continue; }
+    if(b.broken){ run.progress=0; advanceRunner(run); continue; }   // skip cleared blocks
     // all alive picks chip the SAME block — their powers add together
     const power=alivePicks.reduce((s,p)=>s+p.power,0);
     run.progress += power*run.speed;
     // but each pick wears down on its own
     for(const p of alivePicks){
       p.quality-=b.wear;
-      if(p.quality<=0){ p.quality=0; killPick(p); }
+      if(p.quality<=0){ p.quality=0; killPick(p); if(p.level>=12) explodeAt(run.lane,run.row); }
       updatePickQ(p);
     }
     if(b.el._crack) b.el._crack.style.opacity=clamp(run.progress/b.hp,0,1)*0.9;
@@ -1307,18 +1470,11 @@ function tick(){
     else run.el.classList.remove('swing');
     if(run.progress>=b.hp){
       breakBlock(lane,run.row,b); run.progress=0;
-      const next=run.row+1;
-      if(next>=dig.giftRow){                // reached the gift at the bottom
-        run.row=dig.giftRow; run.el.style.top=(run.row*dig.blockH)+'px';
-        run.finished=true; run.reachedGift=true;
-        run.el.classList.remove('swing','lead'); run.el.classList.add('won');
-        sfxGift();
-      } else run.row=next;
+      advanceRunner(run);
     }
   }
   focusCamera();
-  // the level ends only once EVERY lane is done (reached its gift OR lost all picks),
-  // so two lanes reaching a gift pay out two rewards
+  // the level ends only once EVERY lane is done (reached its gift OR lost all picks)
   if(dig.runners.every(r=>r.finished)){
     const winners=dig.runners.filter(r=>r.reachedGift);
     if(winners.length) onLevelComplete(winners);
@@ -1385,12 +1541,28 @@ function renderLevelLine(doneUpTo){
 }
 function onLevelComplete(winners){
   stopTick(); game.running=false;
-  sfxComplete();
   let reward=0;
-  winners.forEach(()=>{ reward += rndInt(30,70); });   // a separate gift bonus per winning lane
+  winners.forEach(()=>{ reward += rndInt(12,32); });   // each chest pays up to ~32
   game.coins+=reward; game.runCoins+=reward;
+  game.stats.levelsWon = Math.max(game.stats.levelsWon, game.level);   // for quests
   renderCoins();
+  pendingReturn = launchSnapshot.slice();
+  $('#digStatus').textContent = game.level>=MAX_GAME_LEVEL ? 'игра пройдена!' : 'уровень пройден!';
+  // first: pan to the chest and let a 2s golden fountain erupt, THEN show the banner
+  focusChestCamera(winners[0].lane);
+  winners.forEach(w=>coinRain(dig.lanes[w.lane].el, dig.giftRow));
+  setTimeout(()=>showLevelBanner(winners, reward), 2000);
+}
+// point the camera at the chest row so the fountain is on screen
+function focusChestCamera(lane){
+  const H=$('#camera').clientHeight;
+  const giftY=SKY_H+(dig.giftRow+0.5)*dig.blockH;
+  const y=clamp(giftY-H*0.62, 0, Math.max(0,dig.worldH-H));
+  $('#digWorld').style.transform=`translateY(${-y}px)`; dig._lastY=y;
+}
+function showLevelBanner(winners, reward){
   const finished = game.level>=MAX_GAME_LEVEL;          // just cleared the final level
+  sfxComplete();
   $('#bannerGift').src=TEX.gift;
   $('#bannerTitle').textContent = finished ? 'ИГРА ПРОЙДЕНА!' : `УРОВЕНЬ ${game.level} ПРОЙДЕН!`;
   $('#bannerText').innerHTML = finished
@@ -1403,8 +1575,6 @@ function onLevelComplete(winners){
   renderLevelLine(game.level);
   $('#bannerBtn').textContent = finished ? 'НАЧАТЬ ЗАНОВО' : `ИГРАТЬ · УРОВЕНЬ ${game.level+1}`;
   $('#banner').classList.add('show');
-  $('#digStatus').textContent = finished ? 'игра пройдена!' : 'уровень пройден!';
-  pendingReturn = launchSnapshot.slice();
 }
 // slide the full-screen dig view back down, then reveal the merge field again
 function leaveImmersive(cb){
@@ -1469,28 +1639,65 @@ function redeemPromo(){
   const raw=$('#promoInput').value.trim().toLowerCase();
   if(!raw){ promoMsg('Введите промокод', false); return; }
   const promo=PROMOS[raw];
-  if(!promo){ promoMsg('Такого промокода нет', false); return; }
-  if(game.usedPromos.includes(raw)){ promoMsg('Этот промокод уже использован', false); return; }
-  if(promo.reward==='pick10'){
-    if(freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
-    addPickToGrid(10);
-  }
+  // not in the base, or already redeemed → the same "exhausted" message
+  if(!promo || game.usedPromos.includes(raw)){ promoMsg('Промокод не найден или исчерпан', false); return; }
+  if(freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
+  addPickToGrid(promo.level);
   game.usedPromos.push(raw);
-  audioInit(); sfxGift();
+  audioInit(); sfxReward();
   promoMsg('Промокод принят: '+promo.label+'!', true);
   $('#promoInput').value='';
   refreshUI();
 }
 
-// "update available" note — shown once, then remembered in the save
+// "update available" note — shown once per new version, remembered in the save
 function maybeShowUpdateNote(){
-  if(game.seenUpdate) return;
+  if(game.seenUpdate===LATEST_UPDATE) return;
   openModal('updateNote');
 }
 function dismissUpdateNote(){
   closeModal('updateNote');
-  game.seenUpdate=true;
+  game.seenUpdate=LATEST_UPDATE;
   save();
+}
+
+/* ---- quests ---- */
+function renderQuests(){
+  const box=$('#questList'); if(!box) return;
+  box.innerHTML='';
+  QUESTS.forEach(q=>{
+    const val=questStat(q.stat);
+    const cur=Math.min(val,q.target);
+    const claimed=game.claimedQuests.includes(q.id);
+    const done=val>=q.target;
+    const row=document.createElement('div');
+    row.className='questItem'+(claimed?' claimed':done?' ready':'');
+    row.innerHTML=
+      `<div class="qTop"><span class="qTitle">${q.title}</span><span class="qReward">+${q.reward}</span></div>`+
+      `<div class="qBarTrack"><div class="qBar" style="width:${Math.round(cur/q.target*100)}%"></div></div>`+
+      `<div class="qBot"><span class="qProg">${cur} / ${q.target}</span>`+
+        (claimed ? `<span class="qGot">получено ✓</span>`
+                 : `<button class="qClaim" data-q="${q.id}"${done?'':' disabled'}>ЗАБРАТЬ</button>`)+
+      `</div>`;
+    box.appendChild(row);
+  });
+  $$('.qClaim',box).forEach(b=>b.addEventListener('click',()=>claimQuest(b.dataset.q)));
+}
+function claimQuest(id){
+  const q=QUESTS.find(x=>x.id===id); if(!q) return;
+  if(game.claimedQuests.includes(id) || questStat(q.stat)<q.target) return;
+  game.claimedQuests.push(id);
+  game.coins+=q.reward;
+  audioInit(); sfxReward();
+  toast(`Задание выполнено: +${q.reward} монет`);
+  refreshUI();
+  renderQuests();
+}
+// a "!" badge on the Задания button when a reward is ready to claim
+function renderQuestBadge(){
+  const b=$('#questsBtn'); if(!b) return;
+  const any=QUESTS.some(q=>!game.claimedQuests.includes(q.id) && questStat(q.stat)>=q.target);
+  b.classList.toggle('hasClaim', any);
 }
 
 /* =========================================================
@@ -1505,12 +1712,12 @@ function boot(){
 
   // ---- core controls ----
   $('#buyBtn').addEventListener('click',buyPick);
-  $('#bulkBtn').addEventListener('click',bulkBuy);
   $('#launchBtn').addEventListener('click',launch);
   $('#bannerBtn').addEventListener('click',onBannerNext);
 
   // ---- top-right actions ----
   $('#updatesBtn').addEventListener('click',()=>openModal('updatesModal'));
+  $('#questsBtn').addEventListener('click',()=>{ renderQuests(); openModal('questsModal'); });
   $('#promoBtn').addEventListener('click',()=>{ promoMsg('',true); openModal('promoModal'); });
 
   // ---- promo modal ----
