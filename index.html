@@ -483,6 +483,7 @@
   .qBot{display:flex; justify-content:space-between; align-items:center;}
   .qProg{font-size:10px; color:var(--ink-dim); letter-spacing:.5px;}
   .qGot{font-size:10px; color:var(--green); font-weight:700;}
+  .qWait{font-size:10px; color:var(--ink-dim); font-weight:600;}
   .qClaim{
     font-family:inherit; font-weight:800; font-size:10px; letter-spacing:.5px; text-transform:uppercase;
     color:#06210a; padding:5px 12px; border:2px solid var(--frame); border-radius:8px; cursor:pointer;
@@ -972,8 +973,9 @@ const game = {
   usedPromos:[],     // promo codes already redeemed
   seenUpdate:'',     // version of the last "update available" note seen
   stats:{blocksDug:0, merges:0, levelsWon:0},  // lifetime totals for quests
-  claimedQuests:[],  // quest ids already claimed
-  passXp:0,          // battle-pass XP
+  claimedQuests:[],  // (legacy) quest ids claimed in the old coin model
+  questsSeen:[],     // quests whose XP has been counted (for the fly animation)
+  passXp:0,          // battle-pass XP (derived from completed quests)
   claimedTiers:[],   // pass tier indices already claimed
 };
 
@@ -1063,6 +1065,7 @@ function save(){
       seenUpdate:game.seenUpdate,
       stats:game.stats,
       claimedQuests:game.claimedQuests,
+      questsSeen:game.questsSeen,
       passXp:game.passXp,
       claimedTiers:game.claimedTiers,
     }));
@@ -1084,6 +1087,7 @@ function load(){
       ? {blocksDug:s.stats.blocksDug||0, merges:s.stats.merges||0, levelsWon:s.stats.levelsWon||0}
       : {blocksDug:0, merges:0, levelsWon:0};
     game.claimedQuests = Array.isArray(s.claimedQuests) ? s.claimedQuests.filter(x=>typeof x==='string') : [];
+    game.questsSeen = Array.isArray(s.questsSeen) ? s.questsSeen.filter(x=>typeof x==='string') : [];
     game.passXp = Number.isFinite(s.passXp) ? s.passXp : 0;
     game.claimedTiers = Array.isArray(s.claimedTiers) ? s.claimedTiers.filter(x=>Number.isFinite(x)) : [];
     return true;
@@ -1111,7 +1115,7 @@ function renderLaunchBtn(){
   const has=game.grid.some(Boolean);
   $('#launchBtn').disabled = game.running || !has;
 }
-function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); renderQuestBadge(); renderPassBadge(); save(); }
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); syncQuestXp(true); save(); }
 
 let toastTimer=null;
 function toast(msg, ms=1700){
@@ -1767,43 +1771,36 @@ function renderQuests(){
   QUESTS.forEach(q=>{
     const val=questStat(q.stat);
     const cur=Math.min(val,q.target);
-    const claimed=game.claimedQuests.includes(q.id);
     const done=val>=q.target;
     const row=document.createElement('div');
-    row.className='questItem'+(claimed?' claimed':done?' ready':'');
+    row.className='questItem'+(done?' ready':'');
     row.innerHTML=
       `<div class="qTop"><span class="qTitle">${q.title}</span><span class="qReward">+${q.reward} XP</span></div>`+
       `<div class="qBarTrack"><div class="qBar" style="width:${Math.round(cur/q.target*100)}%"></div></div>`+
       `<div class="qBot"><span class="qProg">${cur} / ${q.target}</span>`+
-        (claimed ? `<span class="qGot">получено ✓</span>`
-                 : `<button class="qClaim" data-q="${q.id}"${done?'':' disabled'}>ЗАБРАТЬ</button>`)+
+        (done ? `<span class="qGot">получено ✓</span>` : `<span class="qWait">в процессе…</span>`)+
       `</div>`;
     box.appendChild(row);
   });
-  $$('.qClaim',box).forEach(b=>b.addEventListener('click',()=>claimQuest(b.dataset.q, b)));
-}
-function claimQuest(id, srcEl){
-  const q=QUESTS.find(x=>x.id===id); if(!q) return;
-  if(game.claimedQuests.includes(id) || questStat(q.stat)<q.target) return;
-  game.claimedQuests.push(id);
-  gainXp(q.reward);                                   // quests give XP only (the pass's only fuel)
-  flyXp(srcEl, q.reward);                             // animate the XP flying to the pass
-  audioInit(); sfxReward();
-  refreshUI();
-  renderQuests();
-}
-// a "!" badge on the Квесты button when a reward is ready to claim
-function renderQuestBadge(){
-  const b=$('#questsBtn'); if(!b) return;
-  const any=QUESTS.some(q=>!game.claimedQuests.includes(q.id) && questStat(q.stat)>=q.target);
-  b.classList.toggle('hasClaim', any);
 }
 
 /* ---- battle pass (beta) ---- */
-function gainXp(n){
-  game.passXp += n;
+// XP is derived purely from COMPLETED quests (the only source). No manual claim, so it
+// always reflects real progress — works correctly even on accounts from older versions.
+function syncQuestXp(animate){
+  let xp=0; const fresh=[];
+  QUESTS.forEach(q=>{
+    if(questStat(q.stat)>=q.target){
+      xp+=q.reward;
+      if(!game.questsSeen.includes(q.id)) fresh.push(q);
+    }
+  });
+  game.passXp=xp;
+  fresh.forEach(q=>game.questsSeen.push(q.id));
+  if(animate && fresh.length && !document.body.classList.contains('digging')){
+    fresh.forEach((q,i)=> setTimeout(()=>{ audioInit(); sfxReward(); flyXp($('#questsBtn'), q.reward); }, i*320));
+  }
   renderPassBadge();
-  if($('#passModal') && $('#passModal').classList.contains('show')) renderPass();
 }
 function passRewardLabel(r){ return r.coins ? `${r.coins} монет` : `Кирка ${r.pick} ур.`; }
 function passRewardIcon(r){
@@ -1930,6 +1927,7 @@ function boot(){
   enablePassDrag();
   newLevel(game.level);          // build the dig field for the saved/initial level
   renderAllSlots();              // paint any restored picks into the grid
+  syncQuestXp(false);            // derive pass XP from existing quest progress (no animation)
   refreshUI();
   maybeShowUpdateNote();         // one-time "update available" note
 }
