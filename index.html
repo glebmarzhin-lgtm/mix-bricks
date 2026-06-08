@@ -296,14 +296,13 @@
   }
 
   /* ---------- HEADER ACTIONS (updates / promo) ---------- */
-  #headerRow{display:flex; align-items:center; gap:6px;}
-  #headerRow .hSpace{flex:0 0 60px;}           /* mirrors #topActions so the title stays centered */
-  #headerRow #title{flex:1 1 auto; padding:2px 0;}
-  #topActions{flex:0 0 60px; display:flex; flex-direction:column; gap:5px;}
+  /* a row of action buttons above the title */
+  #topActions{display:flex; gap:6px; margin-bottom:2px;}
+  #topActions .iconBtn{flex:1 1 0;}
   .iconBtn{
     position:relative;
     display:flex; flex-direction:column; align-items:center; gap:2px;
-    width:100%; padding:5px 3px; line-height:1; cursor:pointer;
+    width:100%; padding:6px 3px; line-height:1; cursor:pointer;
     font-family:inherit; font-weight:700; font-size:8px; letter-spacing:.2px;
     color:var(--ink); background:var(--panel2);
     border:2px solid var(--frame); border-radius:9px;
@@ -492,6 +491,74 @@
   .qClaim:active{transform:translateY(2px); box-shadow:0 1px 0 #0c1a12;}
   .qClaim:disabled{background:#2a3530; color:#5a6660; cursor:not-allowed; box-shadow:0 3px 0 #0c1a12; border-color:#1a241e;}
 
+  /* ---------- pass modal (purple/gold) ---------- */
+  .modalBox.passBox{
+    background:linear-gradient(180deg,#2c2640,#201b30);
+    box-shadow:inset 0 0 0 3px #4a3f6e, 0 8px 0 #05030a;
+  }
+  .passBox h2{color:#e6d28a; text-shadow:0 2px 0 #6a4a8a,0 4px 0 #2a1c44;}
+  .passBox .modalIcon{filter:drop-shadow(0 0 7px #ffd54a);}
+  .passBox .modalSub{color:#c8bce6;}
+  .betaTag{
+    font-size:8px; font-weight:800; letter-spacing:.5px; color:#1a1230;
+    background:linear-gradient(#ffd54a,#d8a020); padding:2px 6px; border-radius:6px;
+    border:1px solid #2a1c44; align-self:center;
+  }
+  .passXp{
+    font-size:12px; font-weight:800; color:#ffd54a; letter-spacing:.5px;
+    margin-bottom:12px; padding:7px; background:#1a1530; border:2px solid #3a2f5a;
+    border-radius:8px; box-shadow:inset 0 0 0 2px #4a3f6e;
+  }
+  /* horizontal scrollable reward track */
+  #passList{ overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; margin-bottom:14px;
+    cursor:grab; scrollbar-width:thin; scrollbar-color:#8a6ae0 #1a1530; }
+  #passList::-webkit-scrollbar{ height:9px; }
+  #passList::-webkit-scrollbar-track{ background:#1a1530; border-radius:5px; margin:0 16px; }
+  #passList::-webkit-scrollbar-thumb{ background:linear-gradient(#9a7ae8,#5a3ca0); border-radius:5px; border:1px solid #2a2046; }
+  #passList::-webkit-scrollbar-thumb:hover{ background:linear-gradient(#a888f0,#6a4ab0); }
+  .passInner{ position:relative; display:inline-flex; gap:8px; padding:6px 12px 4px; }
+  /* connecting line through the tier dots */
+  .passLine{ position:absolute; left:20px; right:20px; top:66px; height:5px; border-radius:3px;
+    background:#171228; box-shadow:inset 0 0 0 1px #3a2f5a; z-index:0; }
+  .passLineFill{ height:100%; border-radius:3px; background:linear-gradient(90deg,#ffd54a,#ff9e2a); }
+  .passNode{ position:relative; z-index:1; flex:0 0 auto; width:72px;
+    display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .passRw{ height:46px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:1px; }
+  .passPic{ width:34px; height:34px; image-rendering:pixelated; filter:drop-shadow(0 2px 1px #0008); }
+  .passLbl{ font-size:9px; font-weight:700; color:var(--ink-dim); white-space:nowrap; }
+  .passDot{ width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; color:#d6c8ff;
+    background:#1a1530; border:2px solid #4a3f6e; box-shadow:0 0 0 3px #201b30; }
+  .passNode.ready .passDot{ background:linear-gradient(#7a5ad0,#4a3088); color:#fff; border-color:#9a7ae0; }
+  .passNode.claimed .passDot{ background:linear-gradient(var(--green),var(--green-d)); color:#06210a; border-color:#3a7a52; }
+  .passNode.final .passDot{ background:linear-gradient(#ffd54a,#d8a020); color:#3a2600; border-color:#ffe98a; }
+  .passNode.final .passLbl{ color:#ffd54a; }
+  .passNode.claimed{ opacity:.6; }
+  .passNeed{ font-size:8px; color:var(--ink-dim); letter-spacing:.3px; }
+  .passGot{ font-size:15px; color:var(--green); font-weight:800; height:24px; line-height:24px; }
+  .passClaim{ font-family:inherit; font-weight:800; font-size:9px; letter-spacing:.3px; text-transform:uppercase;
+    color:#1a1230; padding:4px 8px; border:2px solid var(--frame); border-radius:7px; cursor:pointer;
+    background:linear-gradient(#ffd54a,#d8a020); box-shadow:0 2px 0 #1a1226; touch-action:manipulation; }
+  .passClaim:active{ transform:translateY(2px); box-shadow:0 0 0 #1a1226; }
+  .passClaim:disabled{ background:#2a2440; color:#6a5e88; cursor:not-allowed; box-shadow:0 2px 0 #1a1226; border-color:#241c3a; }
+
+  /* XP flying from a claimed quest to the Пропуск button */
+  .xpFly{
+    position:fixed; z-index:400; transform:translate(-50%,-50%); pointer-events:none;
+    font-size:13px; font-weight:800; color:#ffd54a; letter-spacing:.3px;
+    text-shadow:0 1px 2px #000, 0 0 8px #8a6ae0;
+    animation:xpFly .85s cubic-bezier(.5,0,.5,1) forwards;
+  }
+  @keyframes xpFly{
+    0%  {opacity:0; transform:translate(-50%,-50%) scale(.6);}
+    15% {opacity:1; transform:translate(-50%,-50%) scale(1.18);}
+    72% {opacity:1;}
+    100%{opacity:0; transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(.4);}
+  }
+  .iconBtn.xpHit{ animation:xpHit .32s ease; }
+  @keyframes xpHit{ 0%,100%{transform:none;} 45%{transform:scale(1.2);} }
+
   .hidden{display:none !important;}
 </style>
 </head>
@@ -499,15 +566,13 @@
 <div id="game">
 
   <div id="topbar">
-    <div id="headerRow">
-      <div class="hSpace"></div>
-      <div id="title">MIX BRICKS</div>
-      <div id="topActions">
-        <button class="iconBtn" id="updatesBtn"><span class="ic">📋</span><span class="lb">Обновления</span></button>
-        <button class="iconBtn" id="questsBtn"><span class="ic">🎯</span><span class="lb">Задания</span></button>
-        <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
-      </div>
+    <div id="topActions">
+      <button class="iconBtn" id="updatesBtn"><span class="ic">📋</span><span class="lb">Обновления</span></button>
+      <button class="iconBtn" id="questsBtn"><span class="ic">🎯</span><span class="lb">Квесты</span></button>
+      <button class="iconBtn" id="passBtn"><span class="ic">🏆</span><span class="lb">Пропуск</span></button>
+      <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
     </div>
+    <div id="title">MIX BRICKS</div>
     <div id="statRow">
       <div id="coins" class="pix"><img class="coinIcon" id="coinIcon" alt=""><span id="coinVal">10</span></div>
       <div id="progressWrap" class="pix">
@@ -590,10 +655,20 @@
 <!-- quests (green objectives theme) -->
 <div class="modal" id="questsModal"><div class="modalBox questsBox">
   <button class="modalX" data-close="questsModal" aria-label="Закрыть">✕</button>
-  <div class="modalHead"><span class="modalIcon">🎯</span><h2>ЗАДАНИЯ</h2></div>
-  <p class="modalSub">Выполняй цели и забирай награды монетами.</p>
+  <div class="modalHead"><span class="modalIcon">🎯</span><h2>КВЕСТЫ</h2></div>
+  <p class="modalSub">Выполняй цели — получай XP для пропуска.</p>
   <div id="questList"></div>
   <button class="btn go modalDone" data-close="questsModal">ЗАКРЫТЬ</button>
+</div></div>
+
+<!-- battle pass (beta) -->
+<div class="modal" id="passModal"><div class="modalBox passBox">
+  <button class="modalX" data-close="passModal" aria-label="Закрыть">✕</button>
+  <div class="modalHead"><span class="modalIcon">🏆</span><h2>ПРОПУСК</h2><span class="betaTag">бета</span></div>
+  <p class="modalSub">Зарабатывай XP в квестах — открывай награды пропуска.</p>
+  <div id="passXp" class="passXp">0 XP</div>
+  <div id="passList"></div>
+  <button class="btn go modalDone" data-close="passModal">ЗАКРЫТЬ</button>
 </div></div>
 
 <script>
@@ -751,9 +826,9 @@ const BLOCKS = {
           pal:['#8a8a95','#75757f','#616169','#4f4f57'], speck:['#e0883c','#b8621f'], speckN:14},
   iron:  {name:'Железо',  coins:2,  hp:22, wear:4, seed:51,
           pal:['#7a7a82','#6a6a72','#56565e','#46464e'], speck:['#ecd6b4','#b89a78'], speckN:13},
-  gold:  {name:'Золото',  coins:3,  hp:30, wear:6, seed:67,
+  gold:  {name:'Золото',  coins:3,  hp:30, wear:5, seed:67,
           pal:['#6a6a72','#5a5a62','#4a4a52','#3c3c44'], speck:['#ffd23f','#caa11f'], speckN:16},
-  gem:   {name:'Кристалл',coins:4,  hp:42, wear:8, seed:83,
+  gem:   {name:'Кристалл',coins:4,  hp:42, wear:6, seed:83,
           pal:['#3a2f52','#2f2744','#262038','#1d182c'], speck:['#54e8ff','#2aa8d8'], speckN:18},
 };
 const BLOCK_ORDER = ['earth','stone','copper','iron','gold','gem'];
@@ -898,10 +973,12 @@ const game = {
   seenUpdate:'',     // version of the last "update available" note seen
   stats:{blocksDug:0, merges:0, levelsWon:0},  // lifetime totals for quests
   claimedQuests:[],  // quest ids already claimed
+  passXp:0,          // battle-pass XP
+  claimedTiers:[],   // pass tier indices already claimed
 };
 
 function pickPower(lv){ return lv; }
-function pickMaxQ(lv){ return 45 + lv*30; }
+function pickMaxQ(lv){ return 50 + lv*36; }   // tougher picks → deep levels are beatable
 // level of the n-th purchase (1-based), using the cumulative tier thresholds
 function levelForPurchase(n){
   let lvl=1;
@@ -930,25 +1007,44 @@ const CHANGELOG = [
   {date:'07.06.2026', title:'пак улучшений',
    text:'добавлен список обновлений и новый дизайн окон, покупка кирок стала проще. Добавлен 11-й уровень кирки, монетки стали красивее. Появилась система промокодов.'},
   {date:'08.06.2026', title:'масштабный протокол',
-   text:'переработан баланс: экономика медленнее (монет ~×3 меньше), уровни длиннее, новые пороги улучшений (50→150→250→350→600), награда из сундука до 50. Добавлена кирка 12 уровня — взрывает 3×2 блока и светится. Новый промокод «Balance» (кирка 5 уровня). Добавлены задания с наградами, дождь монет из сундука, новые звуки. Кнопку «Купить всё» убрали, исправлен зум при быстрых нажатиях.'},
+   text:'переработан баланс: экономика медленнее (монет ~×3 меньше), уровни длиннее, новые пороги улучшений (50→150→250→350→600), награда из сундука до 50. Добавлена кирка 12 уровня — взрывает 3×2 блока и светится. Добавлены задания с наградами, дождь монет из сундука, новые звуки. Кнопку «Купить всё» убрали, исправлен зум при быстрых нажатиях.'},
+  {date:'09.06.2026', title:'Экстренные исправления ошибок',
+   text:'исправлена ошибка, из-за которой нельзя было пройти 8, 9 и 10 уровни даже с полными улучшениями — теперь они проходимы. Добавлена бета-версия «Пропуска»: выполняй квесты, получай XP и открывай награды (финальная — кирка 12 уровня). «Задания» теперь «Квесты». Компенсация за ошибку — промокод «Bug22» (100 монет и кирка 5 уровня).'},
 ];
 // the newest changelog date — bump to re-show the "update available" note
-const LATEST_UPDATE = '08.06.2026';
+const LATEST_UPDATE = '09.06.2026';
 // promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
-  'balance': {level:5, label:'Кирка 5 уровня'},
+  'bug22':   {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
 };
-// quests — lifetime goals, rewards 10–70 coins
+// quests — lifetime goals; reward is XP for the pass (only source of XP).
+// total ≈ 1160 XP, a bit above the pass max of 1000 so it's all reachable.
 const QUESTS = [
-  {id:'dig200',  title:'Вскопать 200 блоков',  stat:'blocksDug', target:200,  reward:25},
-  {id:'dig800',  title:'Вскопать 800 блоков',  stat:'blocksDug', target:800,  reward:45},
-  {id:'dig3000', title:'Вскопать 3000 блоков', stat:'blocksDug', target:3000, reward:70},
-  {id:'buy60',   title:'Купить 60 кирок',       stat:'purchases', target:60,   reward:30},
-  {id:'merge30', title:'Скрестить 30 кирок',    stat:'merges',    target:30,   reward:35},
-  {id:'win3',    title:'Пройти 3 уровня',        stat:'levelsWon', target:3,    reward:40},
-  {id:'win10',   title:'Пройти все 10 уровней',  stat:'levelsWon', target:10,   reward:70},
+  {id:'dig200',   title:'Вскопать 200 блоков',   stat:'blocksDug', target:200,   reward:50},
+  {id:'dig800',   title:'Вскопать 800 блоков',   stat:'blocksDug', target:800,   reward:80},
+  {id:'dig3000',  title:'Вскопать 3000 блоков',  stat:'blocksDug', target:3000,  reward:120},
+  {id:'dig8000',  title:'Вскопать 8000 блоков',  stat:'blocksDug', target:8000,  reward:160},
+  {id:'buy60',    title:'Купить 60 кирок',        stat:'purchases', target:60,    reward:70},
+  {id:'buy200',   title:'Купить 200 кирок',       stat:'purchases', target:200,   reward:110},
+  {id:'buy500',   title:'Купить 500 кирок',       stat:'purchases', target:500,   reward:150},
+  {id:'merge30',  title:'Скрестить 30 кирок',     stat:'merges',    target:30,    reward:70},
+  {id:'merge100', title:'Скрестить 100 кирок',    stat:'merges',    target:100,   reward:120},
+  {id:'win3',     title:'Пройти 3 уровня',         stat:'levelsWon', target:3,     reward:80},
+  {id:'win10',    title:'Пройти все 10 уровней',   stat:'levelsWon', target:10,    reward:150},
 ];
 function questStat(stat){ return stat==='purchases' ? game.purchases : (game.stats[stat]||0); }
+
+// battle pass (beta): 20 tiers. XP comes from clearing levels + claiming quests.
+const PASS_XP_STEP = 50;                              // xp needed per tier
+function passTierXp(i){ return i*PASS_XP_STEP; }      // tier i (1-based) unlocks at i*50 xp
+// rewards stay modest until the final tier (level-12 pick)
+const PASS_REWARDS = [   // index 0 = tier 1 … index 19 = tier 20
+  {coins:15}, {pick:2},  {coins:20}, {pick:3},  {coins:25},
+  {pick:3},   {coins:30}, {pick:4},  {coins:35}, {pick:4},
+  {coins:40}, {pick:5},  {coins:45}, {pick:5},  {coins:55},
+  {pick:6},   {coins:65}, {pick:6},  {coins:90}, {pick:12},
+];
+const PASS_TIERS = PASS_REWARDS.length;              // 20
 
 /* =========================================================
    SAVE  (localStorage persistence)
@@ -967,6 +1063,8 @@ function save(){
       seenUpdate:game.seenUpdate,
       stats:game.stats,
       claimedQuests:game.claimedQuests,
+      passXp:game.passXp,
+      claimedTiers:game.claimedTiers,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -986,6 +1084,8 @@ function load(){
       ? {blocksDug:s.stats.blocksDug||0, merges:s.stats.merges||0, levelsWon:s.stats.levelsWon||0}
       : {blocksDug:0, merges:0, levelsWon:0};
     game.claimedQuests = Array.isArray(s.claimedQuests) ? s.claimedQuests.filter(x=>typeof x==='string') : [];
+    game.passXp = Number.isFinite(s.passXp) ? s.passXp : 0;
+    game.claimedTiers = Array.isArray(s.claimedTiers) ? s.claimedTiers.filter(x=>Number.isFinite(x)) : [];
     return true;
   }catch(e){ return false; }
 }
@@ -1011,7 +1111,7 @@ function renderLaunchBtn(){
   const has=game.grid.some(Boolean);
   $('#launchBtn').disabled = game.running || !has;
 }
-function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); renderQuestBadge(); save(); }
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); renderQuestBadge(); renderPassBadge(); save(); }
 
 let toastTimer=null;
 function toast(msg, ms=1700){
@@ -1219,13 +1319,11 @@ function makeRng(seed){
     t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
 }
 function makeDig(n){
-  // levels 9-10 are "boss" levels: much deeper and built of tougher ore
-  const extra = n>=9 ? (n-8)*8 : 0;      // 9 → +8 rows, 10 → +16 rows
-  const bias  = n>=9 ? (n-8)   : 0;      // 9 → +1 tier, 10 → +2 tier (harder blocks)
-  const terrain = 18 + (n-1)*5 + extra;
+  // depth grows with level (hard but beatable with strong picks)
+  const terrain = 16 + (n-1)*4;        // L1=16 … L10=52
   const rng = makeRng((n*2654435761)>>>0);
   const strataCols=[];                 // fixed per level, generated once here
-  for(let li=0;li<LANES;li++) strataCols.push(laneStrata(terrain,rng,bias));
+  for(let li=0;li<LANES;li++) strataCols.push(laneStrata(terrain,rng));
   return {terrain, giftRow:terrain, rows:terrain+1, blockH:72, worldH:0,
           strataCols, lanes:[], runners:[], lead:null, timer:null, _lastY:null};
 }
@@ -1641,8 +1739,9 @@ function redeemPromo(){
   const promo=PROMOS[raw];
   // not in the base, or already redeemed → the same "exhausted" message
   if(!promo || game.usedPromos.includes(raw)){ promoMsg('Промокод не найден или исчерпан', false); return; }
-  if(freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
-  addPickToGrid(promo.level);
+  if(promo.pick && freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
+  if(promo.coins) game.coins+=promo.coins;
+  if(promo.pick)  addPickToGrid(promo.pick);
   game.usedPromos.push(raw);
   audioInit(); sfxReward();
   promoMsg('Промокод принят: '+promo.label+'!', true);
@@ -1673,7 +1772,7 @@ function renderQuests(){
     const row=document.createElement('div');
     row.className='questItem'+(claimed?' claimed':done?' ready':'');
     row.innerHTML=
-      `<div class="qTop"><span class="qTitle">${q.title}</span><span class="qReward">+${q.reward}</span></div>`+
+      `<div class="qTop"><span class="qTitle">${q.title}</span><span class="qReward">+${q.reward} XP</span></div>`+
       `<div class="qBarTrack"><div class="qBar" style="width:${Math.round(cur/q.target*100)}%"></div></div>`+
       `<div class="qBot"><span class="qProg">${cur} / ${q.target}</span>`+
         (claimed ? `<span class="qGot">получено ✓</span>`
@@ -1681,23 +1780,112 @@ function renderQuests(){
       `</div>`;
     box.appendChild(row);
   });
-  $$('.qClaim',box).forEach(b=>b.addEventListener('click',()=>claimQuest(b.dataset.q)));
+  $$('.qClaim',box).forEach(b=>b.addEventListener('click',()=>claimQuest(b.dataset.q, b)));
 }
-function claimQuest(id){
+function claimQuest(id, srcEl){
   const q=QUESTS.find(x=>x.id===id); if(!q) return;
   if(game.claimedQuests.includes(id) || questStat(q.stat)<q.target) return;
   game.claimedQuests.push(id);
-  game.coins+=q.reward;
+  gainXp(q.reward);                                   // quests give XP only (the pass's only fuel)
+  flyXp(srcEl, q.reward);                             // animate the XP flying to the pass
   audioInit(); sfxReward();
-  toast(`Задание выполнено: +${q.reward} монет`);
   refreshUI();
   renderQuests();
 }
-// a "!" badge on the Задания button when a reward is ready to claim
+// a "!" badge on the Квесты button when a reward is ready to claim
 function renderQuestBadge(){
   const b=$('#questsBtn'); if(!b) return;
   const any=QUESTS.some(q=>!game.claimedQuests.includes(q.id) && questStat(q.stat)>=q.target);
   b.classList.toggle('hasClaim', any);
+}
+
+/* ---- battle pass (beta) ---- */
+function gainXp(n){
+  game.passXp += n;
+  renderPassBadge();
+  if($('#passModal') && $('#passModal').classList.contains('show')) renderPass();
+}
+function passRewardLabel(r){ return r.coins ? `${r.coins} монет` : `Кирка ${r.pick} ур.`; }
+function passRewardIcon(r){
+  return r.pick
+    ? `<img class="passPic" src="${TEX.picks[r.pick]}" alt=""><span class="passLbl">ур.${r.pick}</span>`
+    : `<img class="passPic" src="${TEX.coin}" alt=""><span class="passLbl">${r.coins}</span>`;
+}
+// horizontal scrollable reward track (like a battle pass)
+function renderPass(){
+  const track=$('#passList'); if(!track) return;
+  const xp=game.passXp;
+  const lvl=Math.min(PASS_TIERS, Math.floor(xp/PASS_XP_STEP));
+  $('#passXp').textContent = `${xp} XP · ступень ${lvl}/${PASS_TIERS}`;
+  const fillPct=clamp(xp/passTierXp(PASS_TIERS),0,1)*100;
+  let html=`<div class="passInner"><div class="passLine"><div class="passLineFill" style="width:${fillPct}%"></div></div>`;
+  PASS_REWARDS.forEach((r,i)=>{
+    const tier=i+1, need=passTierXp(tier);
+    const unlocked=xp>=need, claimed=game.claimedTiers.includes(i), isLast=i===PASS_TIERS-1;
+    html+=`<div class="passNode${claimed?' claimed':unlocked?' ready':''}${isLast?' final':''}">`+
+      `<div class="passRw">${passRewardIcon(r)}</div>`+
+      `<div class="passDot">${isLast?'★':tier}</div>`+
+      `<div class="passNeed">${need} XP</div>`+
+      (claimed ? `<div class="passGot">✓</div>`
+               : `<button class="passClaim" data-t="${i}"${unlocked?'':' disabled'}>${unlocked?'ВЗЯТЬ':'🔒'}</button>`)+
+      `</div>`;
+  });
+  html+=`</div>`;
+  track.innerHTML=html;
+  $$('.passClaim',track).forEach(b=>b.addEventListener('click',()=>claimTier(+b.dataset.t)));
+  // scroll the track to the player's current spot
+  const cur=track.querySelector('.passNode.ready')||track.querySelector('.passNode');
+  if(cur) track.scrollLeft=Math.max(0, cur.offsetLeft-100);
+}
+function claimTier(i){
+  const r=PASS_REWARDS[i]; if(!r) return;
+  if(game.claimedTiers.includes(i) || game.passXp<passTierXp(i+1)) return;
+  if(r.pick && freeSlots().length===0){ toast('Освободите место для награды'); return; }
+  game.claimedTiers.push(i);
+  if(r.coins) game.coins+=r.coins;
+  if(r.pick)  addPickToGrid(r.pick);
+  audioInit(); sfxReward();
+  toast(`Награда пропуска: ${passRewardLabel(r)}`);
+  refreshUI();
+  renderPass();
+}
+function renderPassBadge(){
+  const b=$('#passBtn'); if(!b) return;
+  const any=PASS_REWARDS.some((r,i)=>!game.claimedTiers.includes(i) && game.passXp>=passTierXp(i+1));
+  b.classList.toggle('hasClaim', any);
+}
+// a "+N XP" orb flies from the claimed quest to the Пропуск button
+function flyXp(fromEl, amount){
+  const passBtn=$('#passBtn');
+  let ax=innerWidth/2, ay=innerHeight/2;
+  if(fromEl){ const a=fromEl.getBoundingClientRect(); ax=a.left+a.width/2; ay=a.top+a.height/2; }
+  let bx=innerWidth/2, by=42;
+  if(passBtn){ const b=passBtn.getBoundingClientRect(); bx=b.left+b.width/2; by=b.top+b.height/2; }
+  const orb=document.createElement('div'); orb.className='xpFly'; orb.textContent='+'+amount+' XP';
+  orb.style.left=ax+'px'; orb.style.top=ay+'px';
+  orb.style.setProperty('--tx',(bx-ax)+'px');
+  orb.style.setProperty('--ty',(by-ay)+'px');
+  document.body.appendChild(orb);
+  if(passBtn) setTimeout(()=>{ passBtn.classList.add('xpHit'); setTimeout(()=>passBtn.classList.remove('xpHit'),320); },640);
+  setTimeout(()=>orb.remove(),920);
+}
+// drag-to-scroll the pass track with the mouse (phones already swipe natively)
+function enablePassDrag(){
+  const el=$('#passList'); if(!el) return;
+  let down=false, startX=0, startScroll=0, moved=false;
+  el.addEventListener('pointerdown', e=>{
+    if(e.pointerType==='touch') return;          // let touch use native momentum scroll
+    down=true; moved=false; startX=e.clientX; startScroll=el.scrollLeft; el.style.cursor='grabbing';
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!down) return;
+    const dx=e.clientX-startX; if(Math.abs(dx)>4) moved=true;
+    el.scrollLeft=startScroll-dx;
+  });
+  const end=()=>{ down=false; el.style.cursor=''; };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointerleave', end);
+  el.addEventListener('click', e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); } }, true);
 }
 
 /* =========================================================
@@ -1718,6 +1906,7 @@ function boot(){
   // ---- top-right actions ----
   $('#updatesBtn').addEventListener('click',()=>openModal('updatesModal'));
   $('#questsBtn').addEventListener('click',()=>{ renderQuests(); openModal('questsModal'); });
+  $('#passBtn').addEventListener('click',()=>{ renderPass(); openModal('passModal'); });
   $('#promoBtn').addEventListener('click',()=>{ promoMsg('',true); openModal('promoModal'); });
 
   // ---- promo modal ----
@@ -1738,6 +1927,7 @@ function boot(){
   }));
 
   renderChangelog();
+  enablePassDrag();
   newLevel(game.level);          // build the dig field for the saved/initial level
   renderAllSlots();              // paint any restored picks into the grid
   refreshUI();
