@@ -6,18 +6,19 @@
 <title>Mix Bricks</title>
 <style>
   :root{
-    --bg0:#23262d; --bg1:#2b2f37; --panel:#2f333b; --panel2:#393e48;
-    --ink:#e9edf3; --ink-dim:#9aa3b2; --frame:#171a20; --frame2:#454b57;
-    --gold:#e6b455; --gold-d:#b88a32; --green:#7bb78f; --green-d:#4f8062;
-    --red:#d9707c; --cell:#272b33; --cell2:#31363f;
-    --hl:#8597ad;
+    --bg0:#1b1e2a; --bg1:#262a3a; --panel:#2c3142; --panel2:#3a4157;
+    --ink:#eef2f8; --ink-dim:#97a3ba; --frame:#10121b; --frame2:#4a5169;
+    --gold:#f5c451; --gold-d:#c08a28; --green:#7fd29a; --green-d:#3f9268;
+    --red:#e3737f; --cell:#222637; --cell2:#2f3447;
+    --hl:#8aa0c4; --glow-gold:#ffd86a;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
     background:
-      radial-gradient(circle at 50% -8%, #333945 0%, var(--bg0) 62%),
+      radial-gradient(130% 95% at 50% -12%, #3c4773 0%, #242b42 42%, #14161f 100%),
       var(--bg0);
+    background-attachment:fixed;
     color:var(--ink);
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     font-weight:600;
@@ -29,47 +30,78 @@
     user-select:none;
   }
   #game{
+    position:relative;
     width:100%; max-width:440px;
     padding:10px 10px 24px;
     display:flex; flex-direction:column; gap:10px;
   }
+  /* settings gear — floats in the top-right corner, doesn't shift the action buttons */
+  #settingsBtn{
+    position:absolute; top:3px; right:3px; z-index:60;
+    width:30px; height:30px; padding:0; cursor:pointer;
+    font-size:16px; line-height:1; color:var(--ink);
+    background:linear-gradient(180deg,#444b65,#2c3247);
+    border:2px solid var(--frame); border-radius:50%;
+    box-shadow:inset 0 0 0 2px var(--frame2), 0 2px 0 #05030a, 0 3px 6px #00000055;
+    transition:transform .25s ease, filter .1s; touch-action:manipulation;
+  }
+  #settingsBtn:hover{filter:brightness(1.1);}
+  #settingsBtn:active{transform:rotate(90deg) scale(.92);}
 
   /* ---- pixel frame helper ---- */
   .pix{
     border:3px solid var(--frame);
     box-shadow:
       inset 0 0 0 3px var(--frame2),
+      inset 0 2px 0 0 #ffffff14,
       0 4px 0 0 #05030a,
+      0 5px 10px 0 #00000055,
       0 4px 0 3px var(--frame);
-    background:var(--panel);
+    background:linear-gradient(180deg, var(--panel2), var(--panel) 70%);
   }
 
   /* ---------- TOP BAR ---------- */
   #topbar{display:flex; flex-direction:column; gap:8px;}
   #title{
-    text-align:center; font-size:26px; line-height:1; letter-spacing:2px;
+    text-align:center; font-size:30px; line-height:1; letter-spacing:3px; font-weight:800;
     color:var(--gold);
-    text-shadow:0 2px 0 var(--gold-d), 0 4px 0 #5a3d00, 3px 3px 0 #00000080;
-    padding:4px 0 2px;
+    text-shadow:0 2px 0 var(--gold-d), 0 4px 0 #8a5e16, 0 5px 0 #5a3d00, 0 7px 9px #000000aa;
+    padding:6px 0 3px;
+    animation:titleGlow 3.2s ease-in-out infinite;
+  }
+  @keyframes titleGlow{
+    0%,100%{ filter:drop-shadow(0 0 2px #f5c45100); }
+    50%    { filter:drop-shadow(0 0 13px #ffd86a99); }
   }
   #title small{display:block; font-size:10px; color:var(--ink-dim); letter-spacing:4px; text-shadow:none; margin-top:3px;}
   #statRow{display:flex; gap:8px; align-items:stretch;}
   #coins{
     flex:0 0 auto; display:flex; align-items:center; gap:7px;
-    padding:8px 12px; font-size:18px; color:var(--gold);
+    padding:8px 13px; font-size:19px; font-weight:800; color:#ffe49a;
+    background:linear-gradient(180deg,#3c3422,#2a2316);
+    text-shadow:0 1px 0 #00000080;
   }
-  #coins .coinIcon{width:18px; height:18px; image-rendering:pixelated;}
+  #coins .coinIcon{width:20px; height:20px; image-rendering:pixelated;
+    filter:drop-shadow(0 0 4px #ffd86a66);}
   #progressWrap{flex:1; padding:6px 8px; display:flex; flex-direction:column; justify-content:center; gap:4px;}
   #progressLabel{font-size:9px; color:var(--ink-dim); display:flex; justify-content:space-between; letter-spacing:1px;}
   #progressTrack{
-    height:14px; background:#0b0814; border:2px solid var(--frame2);
-    position:relative; overflow:hidden;
+    height:15px; background:#0a0712; border:2px solid var(--frame2);
+    position:relative; overflow:hidden; border-radius:4px;
+    box-shadow:inset 0 2px 4px #000000aa;
   }
   #progressBar{
-    height:100%; width:0%;
-    background:repeating-linear-gradient(45deg,var(--hl) 0 6px,#a6b6c8 6px 12px);
+    height:100%; width:0%; position:relative;
+    background:linear-gradient(180deg,#a9c0e6 0%, #7d95bf 55%, #5f78a2 100%);
+    box-shadow:inset 0 1px 0 #ffffff66, 0 0 8px #8aa0c466;
     transition:width .35s cubic-bezier(.3,1.2,.5,1);
   }
+  #progressBar::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(115deg,#ffffff33 0 7px, transparent 7px 17px);
+    animation:barShine .8s linear infinite;
+  }
+  @keyframes barShine{from{background-position:0 0;} to{background-position:17px 0;}}
 
   /* ---------- MERGE PANEL ---------- */
   #mergePanel{padding:10px;}
@@ -78,15 +110,14 @@
   }
   .slot{
     position:relative; aspect-ratio:1/1;
-    background:
-      linear-gradient(135deg,var(--cell2),var(--cell));
+    background:radial-gradient(125% 125% at 50% 0%, var(--cell2) 0%, var(--cell) 70%);
     border:2px solid #14161b;
-    box-shadow:inset 0 0 0 2px #3a414c, inset 0 4px 6px #00000050;
+    box-shadow:inset 0 0 0 2px #454d66, inset 0 6px 9px #00000066, inset 0 -3px 5px #ffffff0d;
     display:flex; align-items:center; justify-content:center;
-    border-radius:8px;
+    border-radius:11px;
   }
-  .slot.hoverdrop{box-shadow:inset 0 0 0 2px var(--gold), 0 0 10px var(--gold);}
-  .slot.mergeable{box-shadow:inset 0 0 0 2px var(--green), 0 0 12px var(--green);}
+  .slot.hoverdrop{box-shadow:inset 0 0 0 2px var(--gold), 0 0 14px var(--gold);}
+  .slot.mergeable{box-shadow:inset 0 0 0 2px var(--green), 0 0 16px var(--green);}
   .pick{
     position:absolute; width:84%; height:84%;
     display:flex; align-items:center; justify-content:center;
@@ -131,17 +162,24 @@
   /* ---------- CONTROLS ---------- */
   #controls{display:flex; gap:10px;}
   .btn{
-    flex:1; padding:14px 6px; font-family:inherit; font-weight:700; font-size:14px;
+    flex:1; padding:15px 6px; font-family:inherit; font-weight:800; font-size:14px;
     color:#22262e; cursor:pointer; letter-spacing:1px;
-    border:3px solid var(--frame); position:relative; line-height:1.15;
+    border:3px solid var(--frame); position:relative; line-height:1.15; overflow:hidden;
     text-transform:uppercase; border-radius:16px;
-    box-shadow:0 5px 0 0 #0c0e12; transition:transform .06s, box-shadow .06s;
+    box-shadow:0 5px 0 0 #0c0e12, 0 7px 12px #00000055; transition:transform .06s, box-shadow .06s, filter .1s;
     touch-action:manipulation;          /* no double-tap zoom on rapid taps */
   }
+  /* glossy highlight on the top half */
+  .btn::before{
+    content:""; position:absolute; left:3px; right:3px; top:3px; height:44%;
+    border-radius:13px 13px 40% 40%/13px 13px 60% 60%;
+    background:linear-gradient(#ffffff66,#ffffff00); pointer-events:none;
+  }
   .btn small{display:block; font-size:10px; opacity:.82; font-weight:700;}
-  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 0 #0c0e12;}
-  .btn.buy{background:linear-gradient(var(--gold),var(--gold-d));}
-  .btn.go{background:linear-gradient(var(--green),var(--green-d)); color:#10241a;}
+  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 0 #0c0e12, 0 2px 6px #00000055;}
+  .btn.buy{background:linear-gradient(180deg,#ffdc84,#eaad3c 52%,#bd821c);}
+  .btn.go{background:linear-gradient(180deg,#a3e8b6,#5fb37c 52%,#3a8460); color:#0d2418;}
+  .btn:hover:not(:disabled){filter:brightness(1.06);}
   .btn:disabled{filter:grayscale(.55) brightness(.72); cursor:not-allowed; box-shadow:0 5px 0 0 #0c0e12;}
   .btn:disabled:active{transform:none; box-shadow:0 5px 0 0 #0c0e12;}
 
@@ -304,14 +342,15 @@
     display:flex; flex-direction:column; align-items:center; gap:2px;
     width:100%; padding:6px 3px; line-height:1; cursor:pointer;
     font-family:inherit; font-weight:700; font-size:8px; letter-spacing:.2px;
-    color:var(--ink); background:var(--panel2);
-    border:2px solid var(--frame); border-radius:9px;
-    box-shadow:inset 0 0 0 2px var(--frame2), 0 3px 0 #05030a;
-    transition:transform .06s, box-shadow .06s;
+    color:var(--ink); background:linear-gradient(180deg,#444b65,#323950);
+    border:2px solid var(--frame); border-radius:10px;
+    box-shadow:inset 0 0 0 2px var(--frame2), inset 0 1px 0 #ffffff1f, 0 3px 0 #05030a, 0 4px 7px #00000044;
+    transition:transform .06s, box-shadow .06s, filter .1s;
     touch-action:manipulation;          /* no double-tap zoom */
   }
+  .iconBtn:hover{filter:brightness(1.08);}
   .iconBtn:active{transform:translateY(2px); box-shadow:inset 0 0 0 2px var(--frame2), 0 1px 0 #05030a;}
-  .iconBtn .ic{font-size:15px; line-height:1;}
+  .iconBtn .ic{font-size:16px; line-height:1; filter:drop-shadow(0 1px 1px #0008);}
   .iconBtn .lb{white-space:nowrap;}
   /* "!" badge when a quest reward is ready */
   .iconBtn.hasClaim::after{
@@ -560,11 +599,77 @@
   .iconBtn.xpHit{ animation:xpHit .32s ease; }
   @keyframes xpHit{ 0%,100%{transform:none;} 45%{transform:scale(1.2);} }
 
+  /* ---------- settings modal ---------- */
+  .modalBox.settingsBox{
+    background:linear-gradient(180deg,#333a4e,#272c3b);
+    box-shadow:inset 0 0 0 3px #4a5169, 0 8px 0 #05030a;
+  }
+  .settingsBox h2{color:#d6deec; text-shadow:0 2px 0 #2a3146,0 4px 0 #161a26;}
+  .settingsBox .modalIcon{filter:drop-shadow(0 0 6px #aab6d0);}
+  .setRow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 13px; margin-bottom:9px;
+    background:#262b3a; border:2px solid #161a26; border-radius:10px;
+    box-shadow:inset 0 0 0 2px #3a4256;
+  }
+  .setLbl{font-size:14px; font-weight:700; color:var(--ink);}
+  .setToggle{
+    min-width:86px; padding:8px 14px; font-family:inherit; font-weight:800; font-size:12px;
+    letter-spacing:.5px; color:#e8ecf4; cursor:pointer;
+    background:linear-gradient(180deg,#4a5169,#363c50);
+    border:2px solid var(--frame); border-radius:9px;
+    box-shadow:inset 0 0 0 2px #545c76, 0 2px 0 #05030a; touch-action:manipulation;
+    transition:transform .06s;
+  }
+  .setToggle.on{
+    background:linear-gradient(180deg,#7fd29a,#3f9268); color:#0d2418;
+    box-shadow:inset 0 0 0 2px #9fe0b4, 0 2px 0 #05030a;
+  }
+  .setToggle:active{transform:translateY(2px);}
+  .setAbout{margin:6px 0 16px; font-size:12px; color:var(--ink-dim); line-height:1.7; letter-spacing:.5px;}
+  .setAbout b{color:var(--gold); font-size:15px; letter-spacing:1.5px;}
+
+  /* ===================== LIGHT THEME ===================== */
+  body.light{
+    --bg0:#dfe5f0; --bg1:#eef1f8; --panel:#f5f7fc; --panel2:#e7ecf5;
+    --ink:#283044; --ink-dim:#6f7891; --frame:#aeb7ca; --frame2:#ffffff;
+    --cell:#dce2ee; --cell2:#eef2f9; --hl:#5f78a2;
+    background:radial-gradient(130% 95% at 50% -12%, #f6f9ff 0%, #dde4f0 45%, #c6cfe0 100%) fixed;
+  }
+  body.light .pix{
+    box-shadow:inset 0 0 0 3px #ffffff, inset 0 2px 0 #ffffff,
+      0 4px 0 #c2cad9, 0 5px 10px #00000018, 0 4px 0 3px var(--frame);
+  }
+  body.light #title{ text-shadow:0 2px 0 var(--gold-d),0 4px 0 #9a6a18,0 5px 0 #6a4a10,0 6px 8px #00000026; }
+  body.light #coins{ background:linear-gradient(180deg,#fff4d2,#f1e2b0); color:#8a5e12; text-shadow:none; }
+  body.light #coins .coinIcon{filter:drop-shadow(0 0 3px #e0a83c88);}
+  body.light #progressTrack{ background:#c8d0e0; box-shadow:inset 0 2px 4px #00000022; }
+  body.light .slot{
+    border-color:#bcc5d6;
+    box-shadow:inset 0 0 0 2px #ffffff, inset 0 5px 8px #0000001c, inset 0 -3px 5px #ffffff;
+  }
+  body.light .iconBtn{
+    background:linear-gradient(180deg,#ffffff,#e6ebf4); color:#2b3346;
+    box-shadow:inset 0 0 0 2px #ffffff, inset 0 1px 0 #ffffff, 0 3px 0 #b8c0d0, 0 4px 7px #00000018;
+  }
+  body.light #settingsBtn{
+    background:linear-gradient(180deg,#ffffff,#e2e7f2); color:#2b3346;
+    box-shadow:inset 0 0 0 2px #ffffff, 0 2px 0 #b8c0d0, 0 3px 6px #00000018;
+  }
+  body.light .btn{ box-shadow:0 5px 0 #aeb6c6, 0 7px 12px #00000022; }
+  body.light .btn:active{ box-shadow:0 1px 0 #aeb6c6, 0 2px 6px #00000022; }
+  body.light #digHud, body.light #digHint{ color:#5e6883; }
+  /* modals keep their dark themes → reset ink back to light so text stays readable */
+  body.light .modal{ --ink:#e9edf3; --ink-dim:#9aa6bd; }
+  body.light .modalX{ color:#e9edf3; }
+
   .hidden{display:none !important;}
 </style>
 </head>
 <body>
 <div id="game">
+
+  <button id="settingsBtn" aria-label="Настройки">⚙</button>
 
   <div id="topbar">
     <div id="topActions">
@@ -672,6 +777,16 @@
   <button class="btn go modalDone" data-close="passModal">ЗАКРЫТЬ</button>
 </div></div>
 
+<!-- settings -->
+<div class="modal" id="settingsModal"><div class="modalBox settingsBox">
+  <button class="modalX" data-close="settingsModal" aria-label="Закрыть">✕</button>
+  <div class="modalHead"><span class="modalIcon">⚙️</span><h2>НАСТРОЙКИ</h2></div>
+  <div class="setRow"><span class="setLbl">Тема</span><button id="setTheme" class="setToggle">Тёмная</button></div>
+  <div class="setRow"><span class="setLbl">Звук</span><button id="setSound" class="setToggle on">Вкл</button></div>
+  <div class="setAbout"><b>V0.2.5</b><br>© Mix Bricks</div>
+  <button class="btn go modalDone" data-close="settingsModal">ЗАКРЫТЬ</button>
+</div></div>
+
 <script>
 "use strict";
 
@@ -743,7 +858,7 @@ function audioInit(){
   catch(e){ actx=null; }
 }
 function tone(freq,dur,type='square',vol=0.2,slideTo=null,delay=0){
-  if(!actx) return;
+  if(!actx || !game.soundOn) return;
   const t0=actx.currentTime+delay;
   const o=actx.createOscillator(), g=actx.createGain();
   o.type=type; o.frequency.setValueAtTime(freq,t0);
@@ -755,7 +870,7 @@ function tone(freq,dur,type='square',vol=0.2,slideTo=null,delay=0){
   o.start(t0); o.stop(t0+dur+0.03);
 }
 function noiseHit(dur=0.07,vol=0.13,delay=0){
-  if(!actx) return;
+  if(!actx || !game.soundOn) return;
   const t0=actx.currentTime+delay;
   const n=Math.max(1,Math.floor(actx.sampleRate*dur));
   const buf=actx.createBuffer(1,n,actx.sampleRate);
@@ -769,7 +884,7 @@ function noiseHit(dur=0.07,vol=0.13,delay=0){
 }
 // low-passed noise burst → a soft "boom" for explosions
 function boom(dur=0.26,vol=0.24){
-  if(!actx) return;
+  if(!actx || !game.soundOn) return;
   const t0=actx.currentTime;
   const n=Math.max(1,Math.floor(actx.sampleRate*dur));
   const buf=actx.createBuffer(1,n,actx.sampleRate);
@@ -783,7 +898,7 @@ function boom(dur=0.26,vol=0.24){
 }
 let _lastDig=0;
 function sfxDig(){                                  // soft chip into the ground
-  if(!actx) return;
+  if(!actx || !game.soundOn) return;
   const now=performance.now();
   if(now-_lastDig<45) return; _lastDig=now;
   noiseHit(0.05,0.08);
@@ -977,6 +1092,8 @@ const game = {
   questsSeen:[],     // quests whose XP has been counted (for the fly animation)
   passXp:0,          // battle-pass XP (derived from completed quests)
   claimedTiers:[],   // pass tier indices already claimed
+  soundOn:true,      // SFX on/off
+  lightTheme:false,  // light (white) vs dark theme
 };
 
 function pickPower(lv){ return lv; }
@@ -1068,6 +1185,8 @@ function save(){
       questsSeen:game.questsSeen,
       passXp:game.passXp,
       claimedTiers:game.claimedTiers,
+      soundOn:game.soundOn,
+      lightTheme:game.lightTheme,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -1090,6 +1209,8 @@ function load(){
     game.questsSeen = Array.isArray(s.questsSeen) ? s.questsSeen.filter(x=>typeof x==='string') : [];
     game.passXp = Number.isFinite(s.passXp) ? s.passXp : 0;
     game.claimedTiers = Array.isArray(s.claimedTiers) ? s.claimedTiers.filter(x=>Number.isFinite(x)) : [];
+    game.soundOn = s.soundOn!==false;          // default on
+    game.lightTheme = !!s.lightTheme;
     return true;
   }catch(e){ return false; }
 }
@@ -1764,6 +1885,15 @@ function dismissUpdateNote(){
   save();
 }
 
+/* ---- settings (theme + sound) ---- */
+function applyTheme(){ document.body.classList.toggle('light', game.lightTheme); }
+function renderSettings(){
+  const t=$('#setTheme'); if(t){ t.textContent=game.lightTheme?'Светлая':'Тёмная'; t.classList.toggle('on',game.lightTheme); }
+  const s=$('#setSound'); if(s){ s.textContent=game.soundOn?'Вкл':'Выкл'; s.classList.toggle('on',game.soundOn); }
+}
+function toggleTheme(){ game.lightTheme=!game.lightTheme; applyTheme(); renderSettings(); save(); }
+function toggleSound(){ game.soundOn=!game.soundOn; if(game.soundOn){ audioInit(); sfxBuy(); } renderSettings(); save(); }
+
 /* ---- quests ---- */
 function renderQuests(){
   const box=$('#questList'); if(!box) return;
@@ -1905,6 +2035,12 @@ function boot(){
   $('#questsBtn').addEventListener('click',()=>{ renderQuests(); openModal('questsModal'); });
   $('#passBtn').addEventListener('click',()=>{ renderPass(); openModal('passModal'); });
   $('#promoBtn').addEventListener('click',()=>{ promoMsg('',true); openModal('promoModal'); });
+
+  // ---- settings ----
+  $('#settingsBtn').addEventListener('click',()=>{ renderSettings(); openModal('settingsModal'); });
+  $('#setTheme').addEventListener('click',toggleTheme);
+  $('#setSound').addEventListener('click',toggleSound);
+  applyTheme();   // apply the saved theme
 
   // ---- promo modal ----
   $('#promoRedeem').addEventListener('click',redeemPromo);
