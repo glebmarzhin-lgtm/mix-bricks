@@ -132,6 +132,15 @@
     font-size:11px; color:#fff; background:#000a; border:1px solid #fff6;
     padding:0 3px; line-height:14px; min-width:14px; text-align:center;
   }
+  .pick .uses{          /* remaining launches (EVENT only), top-left: 3/3 → 1/3 */
+    display:none;       /* hidden in the normal game — picks there are unlimited */
+    position:absolute; top:-2px; left:-2px; z-index:3;
+    font-size:10px; font-weight:700; color:#dff0ff; background:#0a1c2edd;
+    border:1px solid #5ad0ff99; border-radius:3px;
+    padding:0 3px; line-height:13px; min-width:14px; text-align:center;
+  }
+  .pick .uses.low{ color:#ffd0d0; background:#3a0e12ee; border-color:#ff6a6a; }   /* 1/3 — last launch */
+  body.eventmode .pick .uses{ display:block; }   /* event picks are used up after 3 launches */
   .pick.dragging{z-index:50; cursor:grabbing; transform:scale(1.12);}
   .pick.spawn{animation:pop .28s cubic-bezier(.2,1.6,.4,1);}
   @keyframes pop{0%{transform:scale(0) rotate(-25deg);}100%{transform:scale(1) rotate(0);}}
@@ -161,6 +170,23 @@
 
   /* ---------- CONTROLS ---------- */
   #controls{display:flex; gap:10px;}
+  /* pending reward pick (normal mode): appears left of БУЙ when the field is full */
+  #pendingPick{
+    display:none; flex:0 0 auto; width:64px; align-items:center; justify-content:center;
+    position:relative; cursor:pointer; border:3px solid var(--frame); border-radius:16px;
+    background:linear-gradient(#2a2f3a,#1c2027);
+    box-shadow:0 5px 0 0 #0c0e12, 0 7px 12px #00000055; touch-action:manipulation;
+    animation:pendPulse 1.1s ease-in-out infinite;
+  }
+  #pendingPick img{ width:42px; height:42px; image-rendering:pixelated; filter:drop-shadow(0 2px 2px #000a); }
+  #pendingPick .pendBadge{
+    position:absolute; top:-7px; right:-7px; min-width:19px; height:19px; line-height:18px;
+    font-size:11px; font-weight:800; color:#fff; background:#e0431f; border:2px solid #0c0e12;
+    border-radius:10px; text-align:center; animation:none;
+  }
+  #pendingPick:active{ transform:translateY(3px); box-shadow:0 2px 0 0 #0c0e12; }
+  @keyframes pendPulse{ 0%,100%{filter:brightness(1);} 50%{filter:brightness(1.28);} }
+  body.eventmode #pendingPick{ display:none !important; }   /* pending is a normal-game feature */
   .btn{
     flex:1; padding:15px 6px; font-family:inherit; font-weight:800; font-size:14px;
     color:#22262e; cursor:pointer; letter-spacing:1px;
@@ -342,6 +368,65 @@
     70%{opacity:1;}
     100%{opacity:0; transform:translate(var(--dx,0), calc(var(--dy,0) + 64px)) scale(.4);}
   }
+
+  /* ================= SUPER EVENT (evil mage) ================= */
+  #eventBtn{
+    position:fixed; right:14px; bottom:16px; z-index:95;
+    width:80px; height:80px; border:none; background:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 4px 8px #000a);
+    transition:transform .42s cubic-bezier(.5,0,.25,1);
+  }
+  body.digging #eventBtn{ transform:translateX(175%); }   /* slides off to the side on launch, back on return */
+  .evtRing{
+    position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg, #b06bff, #5ad6ff, #ffe23a, #ff5ad0, #b06bff);
+    animation:evtSpin 3.2s linear infinite; box-shadow:0 0 14px #9a5cffaa;
+  }
+  .evtRing::after{ content:""; position:absolute; inset:5px; border-radius:50%; background:#191427; }
+  .evtCore{ position:relative; z-index:1; font-size:30px; line-height:1; animation:evtBob 1.4s ease-in-out infinite; }
+  .evtTag{
+    position:absolute; z-index:1; bottom:-3px; left:50%; transform:translateX(-50%);
+    font-size:9px; font-weight:800; letter-spacing:1px; color:#fff; white-space:nowrap;
+    background:#7a32d8; padding:1px 7px; border-radius:6px; box-shadow:0 1px 0 #0008;
+  }
+  .evtTag.timer{ font-size:8px; letter-spacing:0; padding:1px 5px; background:#444; }
+  @keyframes evtSpin{ to{ transform:rotate(360deg); } }
+  @keyframes evtBob{ 0%,100%{transform:translateY(0) rotate(-4deg);} 50%{transform:translateY(-3px) rotate(4deg);} }
+  #eventBtn.locked .evtRing{ animation-duration:7s; filter:grayscale(.6) brightness(.75); }
+  #eventBtn.locked .evtTag{ background:#444; }
+
+  .modalBox.eventBox{ border-color:#3a2360; background:linear-gradient(#241640,#160d28); }
+  .eventBox h2{ color:#cba6ff; text-shadow:0 2px 0 #3a1d6a,0 4px 0 #1a0d33; }
+  .eventBox .modalIcon{ filter:drop-shadow(0 0 7px #9a5cff); }
+  .eventBox .modalSub{ color:#d8c8ff; }
+  .eventInfo{ font-size:12px; color:#b6a0e0; margin:4px 0 12px; line-height:1.55; }
+  .eventInfo b{ color:#ffe23a; }
+  .eventInfo .evtTimer{ color:#8fd6ff; font-weight:700; }
+
+  .mage{ position:absolute; left:0; width:100%; z-index:5; pointer-events:none; display:flex; align-items:flex-end; justify-content:center; }
+  .mageImg{ image-rendering:pixelated; filter:drop-shadow(0 6px 0 #0007) drop-shadow(0 0 22px #9a5cffaa); animation:mageFloat 2.4s ease-in-out infinite; }
+  @keyframes mageFloat{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  .mage.hurt .mageImg{ animation:mageHit .14s linear infinite; }
+  @keyframes mageHit{ 0%{transform:translate(-4px,-2px);} 50%{transform:translate(4px,2px);} 100%{transform:translate(-4px,-2px);} }
+  .mage.dead{ animation:mageDie .7s ease forwards; }
+  @keyframes mageDie{ from{opacity:1; transform:scale(1) rotate(0);} to{opacity:0; transform:scale(.4) rotate(18deg);} }
+  .bossBar.mageBar{ background:rgba(18,10,28,.85); border-color:#0a0618; box-shadow:0 4px 0 #0007, inset 0 0 0 2px #3a2360; }
+  .mageBar .bossBarLabel{ color:#c9a6ff; }
+  .mageBar .bossHp{ background:linear-gradient(#b06bff,#6a1ec0); }
+
+  body.eventmode #coins{ box-shadow:inset 0 0 0 2px #2b8fe0, 0 3px 0 #0a3a66; background:linear-gradient(#103a5a,#0a2238); }
+  body.eventmode #coinVal{ color:#8fd6ff; }
+  body.eventmode #eventBtn .evtRing{ background:conic-gradient(from 0deg,#ff6a6a,#ffb34a,#ff6a6a); }
+  /* event mode top bar: only the gear + an availability note */
+  body.eventmode #updatesBtn, body.eventmode #questsBtn, body.eventmode #passBtn, body.eventmode #promoBtn{ display:none; }
+  #eventTopMsg{ display:none; }
+  body.eventmode #eventTopMsg{ display:flex; align-items:center; flex:1 1 0; padding:0 6px;
+    font-size:12px; font-weight:800; letter-spacing:.3px; color:#c9a6ff; }
+
+  .confetti{ position:absolute; width:9px; height:14px; z-index:70; pointer-events:none;
+    animation-name:confFall; animation-timing-function:cubic-bezier(.2,.6,.5,1); animation-fill-mode:forwards; }
+  @keyframes confFall{ 0%{opacity:1; transform:translate(0,0) rotate(0);} 100%{opacity:0; transform:translate(var(--dx,0), var(--dy,320px)) rotate(var(--rot,540deg)); } }
 
   /* ---------- TOAST / BANNER ---------- */
   #toast{
@@ -748,6 +833,7 @@
       <button class="iconBtn" id="questsBtn"><span class="ic">🎯</span><span class="lb">Квесты</span></button>
       <button class="iconBtn" id="passBtn"><span class="ic">🏆</span><span class="lb">Пропуск</span></button>
       <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
+      <span id="eventTopMsg"></span>
       <button id="settingsBtn" aria-label="Настройки">⚙</button>
     </div>
     <div id="title">MIX BRICKS</div>
@@ -765,6 +851,7 @@
   </div>
 
   <div id="controls">
+    <button id="pendingPick" aria-label="Поставить кирку на поле"></button>
     <button class="btn buy" id="buyBtn">КУПИТЬ</button>
     <button class="btn go" id="launchBtn">ЗАПУСТИТЬ</button>
   </div>
@@ -789,6 +876,25 @@
 
 <div id="toast"></div>
 
+<!-- super event: floating spinning button (menu only) + looping boss music -->
+<button id="eventBtn" aria-label="Супер ивент" title="Супер ивент">
+  <span class="evtRing"></span>
+  <span class="evtCore">🧙</span>
+  <span class="evtTag">ИВЕНТ</span>
+</button>
+<audio id="eventMusic" src="event.mp3" loop preload="auto"></audio>
+
+<!-- super event intro (purple arcane theme) -->
+<div class="modal" id="eventModal"><div class="modalBox eventBox">
+  <div class="modalHead"><span class="modalIcon">🧙</span><h2>СУПЕР ИВЕНТ</h2></div>
+  <p class="modalSub" id="eventSub">Одолейте злого мага и получите награду!<br>⚠️ У каждой кирки только <b>3 запуска</b> — потом она ломается навсегда.</p>
+  <div id="eventInfo" class="eventInfo"></div>
+  <div class="modalBtns">
+    <button class="btn buy" id="eventStart">НАЧАТЬ</button>
+    <button class="btn go modalDone" data-close="eventModal">ЗАКРЫТЬ</button>
+  </div>
+</div></div>
+
 <div id="banner"><div id="bannerBox" class="pix">
   <img id="bannerGift" class="giftBig" alt="">
   <h2 id="bannerTitle">УРОВЕНЬ ПРОЙДЕН!</h2>
@@ -802,7 +908,7 @@
 
 <!-- updates / changelog (cool steel-blue news theme) -->
 <div class="modal" id="updatesModal"><div class="modalBox updatesBox">
-  <div class="modalHead"><span class="modalIcon">📋</span><h2>ОБНОВЛЕНИЯ</h2></div>
+  <div class="modalHead"><span class="modalIcon">📋</span><h2>ПОСЛЕДНИЕ ОБНОВЛЕНИЯ</h2></div>
   <div id="changelog"></div>
   <button class="btn go modalDone" data-close="updatesModal">ЗАКРЫТЬ</button>
 </div></div>
@@ -1101,7 +1207,10 @@ function makeGift(){
 }
 
 // procedural gold coin: shaded disc with a beveled rim, top-left glint and a sparkle
-function makeCoin(){
+const COIN_GOLD = {rim:'#8f6314', hi:'#ffe488', lo:'#a9761a', s1:'#fff0a8', s2:'#ffdf63', s3:'#ffd23f', s4:'#ecb52b', s5:'#d49a20', g1:'#fff3c4', g2:'#ffffff', g3:'#fff7d6'};
+const COIN_BLUE = {rim:'#14517f', hi:'#a8e4ff', lo:'#1a76a9', s1:'#d4f0ff', s2:'#84d4ff', s3:'#3fb6ff', s4:'#2b8fe0', s5:'#1f6cbe', g1:'#dff4ff', g2:'#ffffff', g3:'#d6f0ff'};
+function makeCoin(P){
+  P = P || COIN_GOLD;
   const S=16, scale=4; const {c,x}=cv(S*scale);
   const cx=7.5, cy=7.5, R=7.4;
   const put=(px,py,col)=>{ x.fillStyle=col; x.fillRect(px*scale,py*scale,scale,scale); };
@@ -1109,24 +1218,24 @@ function makeCoin(){
     const dx=px-cx, dy=py-cy, d=Math.hypot(dx,dy);
     if(d>R) continue;                                   // outside the coin
     let col;
-    if(d>R-1.1)        col='#8f6314';                   // dark outer rim
-    else if(d>R-2.1)   col=(dx+dy<0)?'#ffe488':'#a9761a'; // bevel: lit top-left, dark bottom-right
+    if(d>R-1.1)        col=P.rim;                        // dark outer rim
+    else if(d>R-2.1)   col=(dx+dy<0)?P.hi:P.lo;          // bevel: lit top-left, dark bottom-right
     else{
       const l=-(dx+dy)/(R*1.5);                         // directional light (bright at top-left)
-      col = l>0.42 ? '#fff0a8'
-          : l>0.12 ? '#ffdf63'
-          : l>-0.18? '#ffd23f'
-          : l>-0.5 ? '#ecb52b'
-          :          '#d49a20';
+      col = l>0.42 ? P.s1
+          : l>0.12 ? P.s2
+          : l>-0.18? P.s3
+          : l>-0.5 ? P.s4
+          :          P.s5;
     }
     put(px,py,col);
   }
   // compact 4-point sparkle in the centre
-  for(let yy=6;yy<=9;yy++){ put(7,yy,'#fff3c4'); put(8,yy,'#fff3c4'); }
-  for(let xx=6;xx<=9;xx++){ put(xx,7,'#fff3c4'); put(xx,8,'#fff3c4'); }
-  put(7,7,'#ffffff'); put(8,7,'#ffffff'); put(7,8,'#fff7d6'); put(8,8,'#fff7d6');
+  for(let yy=6;yy<=9;yy++){ put(7,yy,P.g1); put(8,yy,P.g1); }
+  for(let xx=6;xx<=9;xx++){ put(xx,7,P.g1); put(xx,8,P.g1); }
+  put(7,7,P.g2); put(8,7,P.g2); put(7,8,P.g3); put(8,8,P.g3);
   // tiny extra glint near the top-left
-  put(5,4,'#fff7d6'); put(4,5,'#fff3c4');
+  put(5,4,P.g3); put(4,5,P.g1);
   return c.toDataURL();
 }
 
@@ -1155,14 +1264,40 @@ function makeZombie(){
   }, 6);
 }
 
+// evil mage boss (pointed hat, glowing eyes, white beard) — the super-event boss
+const MAGE_ROWS = [
+ ".......kk.......",
+ "......kPPk......",
+ "......kPPk......",
+ ".....kPSPPk.....",
+ ".....kPPPPk.....",
+ "....kPSPPPPk....",
+ "...kPPPPPSPPk...",
+ "..kkkkkkkkkkkk..",
+ "..kDDDDDDDDDDk..",
+ "..kDeeDDDDeeDk..",
+ "..kDDDDDDDDDDk..",
+ "..kDDbbbbbbDDk..",
+ "..kPbbbbbbbbPk..",
+ "..kPPbbbbbbPPk..",
+ "..kPPPPPPPPPPk..",
+ "...kkkkkkkkkk...",
+];
+function makeMage(){
+  return pixMap(MAGE_ROWS, {
+    'P':'#7b46e0','S':'#b48cff','D':'#160e2c','e':'#67e8ff','b':'#e7e2f6','k':'#0a0618',
+  }, 6);
+}
+
 /* =========================================================
    TEXTURE CACHE
    ========================================================= */
-const TEX = { picks:{}, blocks:{}, gift:'', coin:'', crack:'', zombie:'' };
+const TEX = { picks:{}, blocks:{}, gift:'', coin:'', coinBlue:'', crack:'', zombie:'', mage:'' };
 function buildTextures(){
   for(let lv=1;lv<=MAX_LEVEL;lv++) TEX.picks[lv]=makePick(lv);
   for(const k in BLOCKS) TEX.blocks[k]=makeBlockTex(BLOCKS[k]);
-  TEX.gift=makeGift(); TEX.coin=makeCoin(); TEX.crack=makeCrack(); TEX.zombie=makeZombie();
+  TEX.gift=makeGift(); TEX.coin=makeCoin(COIN_GOLD); TEX.coinBlue=makeCoin(COIN_BLUE);
+  TEX.crack=makeCrack(); TEX.zombie=makeZombie(); TEX.mage=makeMage();
 }
 
 /* =========================================================
@@ -1173,6 +1308,15 @@ const LANES = 5;             // dig lanes = merge columns (always 5)
 const BASE_PRICE = 5;
 const MAX_LEVEL = 13;        // highest pick level (12 = electric, 13 = explosive)
 const MAX_GAME_LEVEL = 10;   // the game has 10 dig levels in total
+const MAX_USES = 3;          // a pick can be launched 3 times before it's used up
+// ---- SUPER EVENT: the evil mage (a separate blue-coin game mode) ----
+const EVENT_END     = '20.06.2026';            // event closes after this date
+const EVENT_END_TS  = new Date(2026,5,21).getTime();  // 21 Jun 2026 00:00 (month 0-based)
+const MAGE_HP       = 17500;                    // big — beaten across many launches (tunable)
+const MAGE_WEAR     = 4;                         // picks tire as they hammer — the bar drains, then they retreat
+const EVENT_COIN_RATE = 1.2;                    // blue coins earned per point of damage dealt
+const EVENT_COOLDOWN_MS = 24*60*60*1000;        // beat the mage once per 24h
+const EVENT_REWARD = {coins:1000, picks:[12,13]};   // chest prize → carried to the normal game
 // purchases needed WITHIN each tier to reach the next pick level:
 // L1→2:50, 2→3:150, 3→4:250, 4→5:350, 5→6:600, then steeper
 const TIER_LENS = [50,150,250,350,600,800,1000,1300,1600,2000,2500,3200];
@@ -1188,7 +1332,7 @@ const game = {
   runCoins:0,
   usedPromos:[],     // promo codes already redeemed
   seenUpdate:'',     // version of the last "update available" note seen
-  stats:{blocksDug:0, merges:0, levelsWon:0},  // lifetime totals for quests
+  stats:{blocksDug:0, merges:0, levelsWon:0, bossesBeaten:0, maxPickLevel:1, mageWins:0},  // lifetime totals for quests
   claimedQuests:[],  // (legacy) quest ids claimed in the old coin model
   questsSeen:[],     // quests whose XP has been counted (for the fly animation)
   passXp:0,          // battle-pass XP (derived from completed quests)
@@ -1196,6 +1340,9 @@ const game = {
   soundOn:true,      // SFX on/off
   lightTheme:false,  // light (white) vs dark theme
   bossHp:{},         // level → boss HP carried over between attempts (chip it down across tries)
+  mode:'normal',     // 'normal' | 'event' (the super-event mage mode)
+  event:{ coins:10, grid:new Array(SLOTS).fill(null), purchases:0, mageHp:MAGE_HP, lastWin:0 },
+  pending:[],        // reward picks waiting for free space on the normal field (levels)
 };
 
 function pickPower(lv){ return lv; }
@@ -1223,40 +1370,31 @@ function tierState(){
    ========================================================= */
 // entries are sorted by date when rendered (oldest on top, newest at the bottom)
 const CHANGELOG = [
-  {date:'31.05.2026', title:'релиз',
-   text:'игра доступна!'},
-  {date:'07.06.2026', title:'пак улучшений',
-   text:'добавлен список обновлений и новый дизайн окон, покупка кирок стала проще. Добавлен 11-й уровень кирки, монетки стали красивее. Появилась система промокодов.'},
-  {date:'08.06.2026', title:'масштабный протокол',
-   text:'переработан баланс: экономика медленнее (монет ~×3 меньше), уровни длиннее, новые пороги улучшений (50→150→250→350→600), награда из сундука до 50. Добавлена кирка 12 уровня — взрывает 3×2 блока и светится. Добавлены задания с наградами, дождь монет из сундука, новые звуки. Кнопку «Купить всё» убрали, исправлен зум при быстрых нажатиях.'},
-  {date:'09.06.2026', title:'Экстренные исправления ошибок',
-   text:'исправлена ошибка, из-за которой нельзя было пройти 8, 9 и 10 уровни даже с полными улучшениями — теперь они проходимы. Добавлена бета-версия «Пропуска»: выполняй квесты, получай XP и открывай награды (финальная — кирка 12 уровня). «Задания» теперь «Квесты». Компенсация за ошибку — промокод «Bug22» (100 монет и кирка 5 уровня).'},
-  {date:'12.06.2026', title:'новый облик и боссы',
-   text:'обновили внешний вид — игра стала наряднее и приятнее. Блоки в поле копания теперь прилегают плотно, без щелей, а тот, что сейчас ломается, мягко подсвечивается. Ячейки кирок стали ровными квадратами. На 5 и 10 уровнях появились боссы-зомби: мало докопаться до низа — нужно ещё одолеть босса кирками! Появились настройки (⚙ сверху): светлая/тёмная тема и звук.'},
-  {date:'13.06.2026', title:'кирки-новинки и доводка боссов',
-   text:'Кирок стало больше — добавлен 13-й уровень! Кирка 12 уровня теперь электрическая: с шансом 70% бьёт током соседнюю кирку, и та копает быстрее и сильнее. А взрывная кирка переехала на 13 уровень. Боссов-зомби доработали: полоска здоровья теперь внизу, а само здоровье сохраняется между попытками — не одолел сразу, добьёшь в следующий заход. После победы уцелевшие кирки красиво влетают в сундук, а босс осыпает всё салютом. Новый промокод «zombie2» — кирка 6 уровня и 50 монет.'},
+  {date:'14.06.2026', title:'🧙 Супер ивент: злой маг',
+   text:'Новый режим! Жми на крутящуюся кнопку справа внизу и сразись со злым магом. Это отдельная игра: своя голубая валюта, всё с нуля, а вместо блоков — огромный маг. У каждой кирки тут только 3 запуска (видно на ячейке: 3/3 → 1/3), зато за урон по магу капают монеты — прокачивай кирки и бей дальше. Маг очень живучий! Одолеешь — он взрывается конфетти, а в награду 1000 монет и кирки 12 + 13 уровня в основную игру. Мага можно одолеть раз в 24 часа, ивент идёт до 20.06.2026. Ещё упростили квесты и добавили музыку в режим мага.'},
 ];
 // the newest changelog date — bump to re-show the "update available" note
-const LATEST_UPDATE = '13.06.2026';
+const LATEST_UPDATE = '14.06.2026';
 // promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
   'bug22':   {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
   'zombie2': {coins:50,  pick:6, label:'кирка 6 уровня и 50 монет'},
 };
-// quests — lifetime goals; reward is XP for the pass (only source of XP).
-// total ≈ 1160 XP, a bit above the pass max of 1000 so it's all reachable.
+// quests — простые понятные цели; награда — XP для пропуска.
+// total ≈ 1200 XP, выше максимума пропуска (1000), так что он открывается весь.
 const QUESTS = [
-  {id:'dig200',   title:'Вскопать 200 блоков',   stat:'blocksDug', target:200,   reward:50},
-  {id:'dig800',   title:'Вскопать 800 блоков',   stat:'blocksDug', target:800,   reward:80},
-  {id:'dig3000',  title:'Вскопать 3000 блоков',  stat:'blocksDug', target:3000,  reward:120},
-  {id:'dig8000',  title:'Вскопать 8000 блоков',  stat:'blocksDug', target:8000,  reward:160},
-  {id:'buy60',    title:'Купить 60 кирок',        stat:'purchases', target:60,    reward:70},
-  {id:'buy200',   title:'Купить 200 кирок',       stat:'purchases', target:200,   reward:110},
-  {id:'buy500',   title:'Купить 500 кирок',       stat:'purchases', target:500,   reward:150},
-  {id:'merge30',  title:'Скрестить 30 кирок',     stat:'merges',    target:30,    reward:70},
-  {id:'merge100', title:'Скрестить 100 кирок',    stat:'merges',    target:100,   reward:120},
-  {id:'win3',     title:'Пройти 3 уровня',         stat:'levelsWon', target:3,     reward:80},
-  {id:'win10',    title:'Пройти все 10 уровней',   stat:'levelsWon', target:10,    reward:150},
+  {id:'merge30',  title:'Скрестить 30 кирок',        stat:'merges',       target:30,   reward:70},
+  {id:'merge150', title:'Скрестить 150 кирок',       stat:'merges',       target:150,  reward:110},
+  {id:'buy80',    title:'Купить 80 кирок',           stat:'purchases',    target:80,   reward:70},
+  {id:'buy300',   title:'Купить 300 кирок',          stat:'purchases',    target:300,  reward:110},
+  {id:'dig800',   title:'Вскопать 800 блоков',       stat:'blocksDug',    target:800,  reward:70},
+  {id:'dig4000',  title:'Вскопать 4000 блоков',      stat:'blocksDug',    target:4000, reward:120},
+  {id:'lvl8',     title:'Получить кирку 8 уровня',    stat:'maxPickLevel', target:8,    reward:90},
+  {id:'lvl11',    title:'Получить кирку 11 уровня',   stat:'maxPickLevel', target:11,   reward:130},
+  {id:'win5',     title:'Пройти 5 уровней',          stat:'levelsWon',    target:5,    reward:90},
+  {id:'win10',    title:'Пройти все 10 уровней',     stat:'levelsWon',    target:10,   reward:140},
+  {id:'boss1',    title:'Одолеть босса‑зомби',       stat:'bossesBeaten', target:1,    reward:80},
+  {id:'mage1',    title:'Одолеть злого мага',        stat:'mageWins',     target:1,    reward:120},
 ];
 function questStat(stat){ return stat==='purchases' ? game.purchases : (game.stats[stat]||0); }
 
@@ -1279,12 +1417,19 @@ const SAVE_KEY='mixbricks_save_v1';
 function save(){
   if(game.running) return;   // never persist a mid-run (empty) field
   try{
+    // the active coins/grid/purchases belong to whichever mode is open; persist BOTH sets
+    const N = game.mode==='event'
+      ? (game._normal || {coins:game.coins, purchases:game.purchases, grid:game.grid, level:game.level})
+      : {coins:game.coins, purchases:game.purchases, grid:game.grid, level:game.level};
+    const ev = game.mode==='event'
+      ? {coins:game.coins, purchases:game.purchases, grid:game.grid, mageHp:game.event.mageHp, lastWin:game.event.lastWin}
+      : {coins:game.event.coins, purchases:game.event.purchases, grid:game.event.grid, mageHp:game.event.mageHp, lastWin:game.event.lastWin};
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v:1,
-      coins:game.coins,
-      purchases:game.purchases,
-      grid:game.grid,
-      level:game.level,
+      coins:N.coins,
+      purchases:N.purchases,
+      grid:N.grid,
+      level:N.level,
       usedPromos:game.usedPromos,
       seenUpdate:game.seenUpdate,
       stats:game.stats,
@@ -1295,6 +1440,8 @@ function save(){
       soundOn:game.soundOn,
       lightTheme:game.lightTheme,
       bossHp:game.bossHp,
+      event:ev,
+      pending:game.pending,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -1306,13 +1453,14 @@ function load(){
     game.purchases  = Number.isFinite(s.purchases) ? s.purchases : 0;
     game.level      = Number.isFinite(s.level) ? clamp(s.level,1,MAX_GAME_LEVEL) : 1;
     game.grid       = (Array.isArray(s.grid) && s.grid.length===SLOTS)
-                        ? s.grid.map(c => (c && Number.isFinite(c.level)) ? {level:c.level} : null)
+                        ? s.grid.map(c => (c && Number.isFinite(c.level)) ? {level:c.level, uses:(Number.isFinite(c.uses)?clamp(c.uses,0,MAX_USES):MAX_USES)} : null)
                         : new Array(SLOTS).fill(null);
     game.usedPromos = Array.isArray(s.usedPromos) ? s.usedPromos.filter(x=>typeof x==='string') : [];
     game.seenUpdate = typeof s.seenUpdate==='string' ? s.seenUpdate : '';   // old boolean → show new note
     game.stats = (s.stats && typeof s.stats==='object')
-      ? {blocksDug:s.stats.blocksDug||0, merges:s.stats.merges||0, levelsWon:s.stats.levelsWon||0}
-      : {blocksDug:0, merges:0, levelsWon:0};
+      ? {blocksDug:s.stats.blocksDug||0, merges:s.stats.merges||0, levelsWon:s.stats.levelsWon||0,
+         bossesBeaten:s.stats.bossesBeaten||0, maxPickLevel:s.stats.maxPickLevel||1, mageWins:s.stats.mageWins||0}
+      : {blocksDug:0, merges:0, levelsWon:0, bossesBeaten:0, maxPickLevel:1, mageWins:0};
     game.claimedQuests = Array.isArray(s.claimedQuests) ? s.claimedQuests.filter(x=>typeof x==='string') : [];
     game.questsSeen = Array.isArray(s.questsSeen) ? s.questsSeen.filter(x=>typeof x==='string') : [];
     game.passXp = Number.isFinite(s.passXp) ? s.passXp : 0;
@@ -1320,6 +1468,20 @@ function load(){
     game.soundOn = s.soundOn!==false;          // default on
     game.lightTheme = !!s.lightTheme;
     game.bossHp = (s.bossHp && typeof s.bossHp==='object') ? s.bossHp : {};
+    game.pending = Array.isArray(s.pending) ? s.pending.filter(x=>Number.isFinite(x)) : [];
+    game.mode = 'normal';                       // always resume in the normal game
+    if(s.event && typeof s.event==='object'){
+      const e=s.event;
+      game.event = {
+        coins: Number.isFinite(e.coins) ? e.coins : 10,
+        purchases: Number.isFinite(e.purchases) ? e.purchases : 0,
+        grid: (Array.isArray(e.grid) && e.grid.length===SLOTS)
+                ? e.grid.map(c => (c && Number.isFinite(c.level)) ? {level:c.level, uses:(Number.isFinite(c.uses)?clamp(c.uses,0,MAX_USES):MAX_USES)} : null)
+                : new Array(SLOTS).fill(null),
+        mageHp: Number.isFinite(e.mageHp) ? e.mageHp : MAGE_HP,
+        lastWin: Number.isFinite(e.lastWin) ? e.lastWin : 0,
+      };
+    }
     return true;
   }catch(e){ return false; }
 }
@@ -1328,7 +1490,10 @@ function renderAllSlots(){ for(let i=0;i<SLOTS;i++) renderSlot(i); }
 /* =========================================================
    HUD
    ========================================================= */
-function renderCoins(){ $('#coinVal').textContent=game.coins; }
+function renderCoins(){
+  $('#coinVal').textContent=game.coins;
+  const ic=$('#coinIcon'); if(ic && TEX.coin) ic.src = game.mode==='event' ? TEX.coinBlue : TEX.coin;
+}
 function renderProgress(){
   const t=tierState();
   $('#progressBar').style.width=clamp(t.inTier/t.tierLen,0,1)*100+'%';
@@ -1345,7 +1510,7 @@ function renderLaunchBtn(){
   const has=game.grid.some(Boolean);
   $('#launchBtn').disabled = game.running || !has;
 }
-function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); syncQuestXp(true); save(); }
+function refreshUI(){ renderCoins(); renderProgress(); renderBuyBtn(); renderLaunchBtn(); renderEventBtn(); renderPending(); syncQuestXp(true); save(); }
 
 let toastTimer=null;
 function toast(msg, ms=1700){
@@ -1367,12 +1532,14 @@ function buildGrid(){
 }
 function freeSlots(){ const f=[]; for(let i=0;i<SLOTS;i++) if(!game.grid[i]) f.push(i); return f; }
 
-function makePickEl(level){
+function makePickEl(level, uses){
   const p=document.createElement('div'); p.className='pick spawn'+(level>=12?' glow12':'');
   const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
   const lv=document.createElement('span'); lv.className='lv'; lv.textContent=level;
   if(level>=12){ const a=document.createElement('div'); a.className='glowAura'+(level===12?' el':''); p.appendChild(a); }
   p.appendChild(img); p.appendChild(lv);
+  const u=(uses==null?MAX_USES:uses);
+  const ub=document.createElement('span'); ub.className='uses'+(u<=1?' low':''); ub.textContent=u+'/'+MAX_USES; p.appendChild(ub);
   p.addEventListener('pointerdown',onPickDown);
   setTimeout(()=>p.classList.remove('spawn'),300);
   return p;
@@ -1380,16 +1547,35 @@ function makePickEl(level){
 function renderSlot(i){
   const s=slotEls[i]; s.innerHTML=''; s.classList.remove('mergeable','hoverdrop');
   const cell=game.grid[i];
-  if(cell){ const el=makePickEl(cell.level); el.dataset.idx=i; s.appendChild(el); }
+  if(cell){ const el=makePickEl(cell.level, cell.uses); el.dataset.idx=i; s.appendChild(el); }
 }
-function addPickToGrid(level, animate=true){
+function addPickToGrid(level, animate=true, uses=MAX_USES){
   const free=freeSlots();
   if(free.length===0) return false;
   const i=free[Math.floor(Math.random()*free.length)];
-  game.grid[i]={level};
+  game.grid[i]={level, uses};
+  notePick(level);
   renderSlot(i);
   if(!animate){ const p=$('.pick',slotEls[i]); if(p) p.classList.remove('spawn'); }
   return true;
+}
+// ---- pending reward picks (normal field full) ----
+function grantPick(level){             // place a reward pick, or queue it if the field is full
+  if(!addPickToGrid(level)){ game.pending.push(level); renderPending(); }
+}
+function renderPending(){
+  const pp=$('#pendingPick'); if(!pp) return;
+  if(game.mode==='event' || !game.pending || !game.pending.length){ pp.style.display='none'; return; }
+  const lv=game.pending[0];
+  pp.style.display='flex';
+  pp.innerHTML=`<img src="${TEX.picks[lv]}" alt="">`+(game.pending.length>1?`<span class="pendBadge">${game.pending.length}</span>`:'');
+}
+function onPendingClick(){
+  if(game.running || !game.pending || !game.pending.length) return;
+  if(freeSlots().length===0){ toast('Сначала освободите место на поле'); return; }   // still no room
+  const lv=game.pending.shift();
+  addPickToGrid(lv); sfxBuy();
+  renderPending(); refreshUI();      // shrinks back to normal once the queue empties
 }
 
 /* ---- buy ---- */
@@ -1486,8 +1672,9 @@ function onPickUp(e){
     if(ti!==from){
       const a=game.grid[from], b=game.grid[ti];
       if(b && a.level===b.level && b.level<MAX_LEVEL){       // MERGE
-        game.grid[ti]={level:b.level+1}; game.grid[from]=null;
+        game.grid[ti]={level:b.level+1, uses:MAX_USES}; game.grid[from]=null;   // merged = fresh pick
         game.stats.merges++;                                  // for quests
+        notePick(b.level+1);                                  // track highest pick reached
         renderSlot(from); renderSlot(ti);
         const np=$('.pick',slotEls[ti]); if(np){ np.classList.add('merging'); setTimeout(()=>np.classList.remove('merging'),300); }
         sfxMerge();
@@ -1508,7 +1695,7 @@ function onPickUp(e){
 // drag a pick out of the field → it floats with a 3s countdown, then deletes
 function trashPick(fromIdx, x, y){
   const cell=game.grid[fromIdx]; if(!cell) return;
-  const level=cell.level;
+  const level=cell.level, uses=cell.uses;      // keep the remaining launches (no free refill on undo)
   game.grid[fromIdx]=null; renderSlot(fromIdx);
   const f=document.createElement('div'); f.className='trashPick';
   f.style.left=x+'px'; f.style.top=y+'px';
@@ -1530,7 +1717,7 @@ function trashPick(fromIdx, x, y){
     if(slot==null){ toast('Поле скрещивания заполнено'); return; }
     done=true; clearInterval(iv); clearTimeout(to);
     f.classList.add('saved'); setTimeout(()=>f.remove(),300);
-    game.grid[slot]={level}; renderSlot(slot);
+    game.grid[slot]={level, uses}; renderSlot(slot);   // restore with the same remaining launches
     sfxBuy();
     refreshUI();
   });
@@ -1848,6 +2035,7 @@ function onReachGift(run){
 }
 function tick(){
   if(!dig||!game.running) return;
+  if(game.mode==='event'){ tickEvent(); return; }        // super-event mage fight
   for(const run of dig.runners){
     if(run.finished) continue;
     const alivePicks=run.picks.filter(p=>p.alive);
@@ -1918,6 +2106,7 @@ function stopTick(){
 /* ---- launch ---- */
 function launch(){
   if(game.running) return;
+  if(game.mode==='event'){ launchEvent(); return; }      // super-event = fight the mage
   // group picks by merge COLUMN (grid index = row*5 + col) → one lane each
   const lanePicks=[]; let total=0;
   launchSnapshot=[];
@@ -1927,7 +2116,7 @@ function launch(){
       const idx=r*LANES+c;
       if(game.grid[idx]){
         const lv=game.grid[idx].level;
-        arr.push(lv); launchSnapshot.push({idx,level:lv});
+        arr.push(lv); launchSnapshot.push({idx,level:lv});   // normal picks are unlimited (no uses)
         game.grid[idx]=null; total++;
       }
     }
@@ -1951,10 +2140,14 @@ function launch(){
 /* ---- run outcomes ---- */
 // put picks back exactly where they launched from (preserve the player's layout)
 function returnPicks(snap){
-  snap.forEach(({idx,level})=>{
-    if(idx!=null && !game.grid[idx]){ game.grid[idx]={level}; renderSlot(idx); }
-    else addPickToGrid(level);
+  let usedUp=0;
+  snap.forEach(({idx,level,uses})=>{
+    const u=(uses==null?MAX_USES:uses);
+    if(u<=0){ usedUp++; return; }                      // pick spent its 3 launches — gone
+    if(idx!=null && !game.grid[idx]){ game.grid[idx]={level,uses:u}; renderSlot(idx); }
+    else addPickToGrid(level, true, u);
   });
+  if(usedUp>0) toast(usedUp===1 ? 'Кирка отслужила 3 запуска и сломалась' : `${usedUp} кирки отслужили свой срок`);
 }
 // draw the 1..10 progress line: levels up to `doneUpTo` are passed, the next one
 // is highlighted as the one you'll play, the rest are locked
@@ -1971,7 +2164,7 @@ function renderLevelLine(doneUpTo){
 function onLevelComplete(winners){
   stopTick(); game.running=false;
   const wasBoss = !!(dig && dig.boss);
-  if(wasBoss) delete game.bossHp[game.level];          // beaten — full HP again if ever replayed
+  if(wasBoss){ delete game.bossHp[game.level]; game.stats.bossesBeaten=(game.stats.bossesBeaten||0)+1; }  // beaten
   let reward=0;
   winners.forEach(()=>{ reward += rndInt(12,32); });   // each chest pays up to ~32
   if(wasBoss) reward += rndInt(50,90);                  // boss bounty
@@ -2062,6 +2255,7 @@ function leaveImmersive(cb){
 }
 function onBannerNext(){
   $('#banner').classList.remove('show');
+  if(game._mageBanner){ game._mageBanner=false; refreshUI(); return; }   // mage prize already granted
   const nextLevel = game.level>=MAX_GAME_LEVEL ? 1 : game.level+1;   // wrap to 1 after the final level
   leaveImmersive(()=>{                                   // dig view slides down, camera rises to the merge field
     newLevel(nextLevel);
@@ -2082,6 +2276,261 @@ function onRunFail(){
     refreshUI();
   });
 }
+
+/* =========================================================
+   SUPER EVENT — the evil mage (separate blue-coin game mode)
+   ========================================================= */
+function eventAvailableInMs(){ const left=(game.event.lastWin+EVENT_COOLDOWN_MS)-Date.now(); return left>0?left:0; }
+function eventClosed(){ return Date.now()>=EVENT_END_TS; }
+function fmtDur(ms){ const s=Math.ceil(ms/1000), h=(s/3600|0), m=((s%3600)/60|0), ss=s%60;
+  return `${h}ч ${String(m).padStart(2,'0')}м ${String(ss).padStart(2,'0')}с`; }
+function fmtClock(ms){ const s=Math.max(0,Math.ceil(ms/1000)), h=(s/3600|0), m=((s%3600)/60|0), ss=s%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+
+// floating button state
+function renderEventBtn(){
+  const b=$('#eventBtn'); if(!b) return;
+  if(eventClosed()){ b.style.display='none'; return; }
+  b.style.display='flex';
+  const tag=b.querySelector('.evtTag');
+  if(game.mode==='event'){ b.classList.remove('locked'); tag.classList.remove('timer'); tag.textContent='ВЫЙТИ'; }
+  else {
+    const left=eventAvailableInMs();
+    if(left>0){ b.classList.add('locked'); tag.classList.add('timer'); tag.textContent=fmtClock(left); }   // live countdown
+    else { b.classList.remove('locked'); tag.classList.remove('timer'); tag.textContent='ИВЕНТ'; }
+  }
+}
+function onEventBtn(){
+  if(game.running) return;
+  if(game.mode==='event'){ leaveEvent(); return; }
+  if(eventAvailableInMs()>0){ toast('Выигрывать ивент можно только раз в 24 часа'); return; }   // on cooldown
+  openEventModal();
+}
+// 1-second clock for the live cooldown timers (button tag + win banner)
+function updateTimers(){
+  if(game.mode!=='event') renderEventBtn();
+  const bt=$('#mageBannerTimer');
+  if(bt && $('#banner').classList.contains('show')) bt.textContent=fmtDur(eventAvailableInMs());
+}
+let eventTimerId=null;
+function openEventModal(){
+  const left=eventAvailableInMs();
+  let html=`Награда: <b>1000</b> монет + кирка <b>12</b> и <b>13</b> уровня.<br>`+
+           `Ивент заканчивается <b>${EVENT_END}</b>. Мага можно одолеть раз в 24 часа.`;
+  if(left>0) html+=`<br><span class="evtTimer">Снова доступно через ${fmtDur(left)}</span>`;
+  $('#eventInfo').innerHTML=html;
+  const start=$('#eventStart'); start.disabled=left>0; start.textContent=left>0?'НА ПЕРЕЗАРЯДКЕ':'НАЧАТЬ';
+  openModal('eventModal');
+  clearInterval(eventTimerId);
+  eventTimerId=setInterval(()=>{
+    if(!$('#eventModal').classList.contains('show')){ clearInterval(eventTimerId); return; }
+    const l=eventAvailableInMs(); const t=$('#eventInfo .evtTimer');
+    if(l>0){ if(t) t.textContent=`Снова доступно через ${fmtDur(l)}`; }
+    else { if(t) t.remove(); const s=$('#eventStart'); s.disabled=false; s.textContent='НАЧАТЬ'; clearInterval(eventTimerId); }
+    renderEventBtn();
+  },1000);
+}
+function startEvent(){
+  if(eventAvailableInMs()>0) return;          // on cooldown
+  closeModal('eventModal'); clearInterval(eventTimerId);
+  enterEvent();
+}
+
+// ---- mode switch ----
+function enterEvent(){
+  if(game.mode==='event' || game.running) return;
+  game._normal={coins:game.coins, purchases:game.purchases, grid:game.grid, level:game.level};
+  game.mode='event';
+  game.coins=game.event.coins; game.purchases=game.event.purchases; game.grid=game.event.grid;
+  document.body.classList.add('eventmode');
+  $('#eventTopMsg').textContent='Ивент доступен до '+EVENT_END;
+  renderAllSlots(); enterEventMenu();
+  renderEventBtn(); playEventMusic();
+  toast('Супер ивент! Одолей злого мага.');
+  refreshUI();
+}
+function leaveEvent(){
+  if(game.mode!=='event') return;
+  stopTick(); game.running=false; document.body.classList.remove('digging');
+  game.event.coins=game.coins; game.event.purchases=game.purchases; game.event.grid=game.grid;
+  game.mode='normal';
+  const N=game._normal||{coins:10,purchases:0,grid:new Array(SLOTS).fill(null),level:1};
+  game.coins=N.coins; game.purchases=N.purchases; game.grid=N.grid; game.level=N.level||1;
+  game._normal=null;
+  document.body.classList.remove('eventmode');
+  stopEventMusic();
+  newLevel(game.level); renderAllSlots();
+  renderEventBtn(); refreshUI();
+}
+// the event "menu" between runs: a static mage preview + its remaining HP bar
+function enterEventMenu(){
+  $('#levelTag').textContent='🧙 ЗЛОЙ МАГ';
+  $('#digStatus').textContent='готов к бою';
+  $('#digHint').textContent='у каждой кирки 3 запуска · за урон по магу — голубые монеты';
+  const lanesEl=$('#lanes'); lanesEl.innerHTML='';
+  const ob=$('#camera').querySelector('.bossBar'); if(ob) ob.remove();
+  const probe=document.createElement('div'); probe.className='lane'; lanesEl.appendChild(probe);
+  const lw=Math.round(probe.clientWidth)||72; lanesEl.innerHTML='';
+  const H=$('#camera').clientHeight||320;
+  dig={ blockH:lw, giftRow:0, rows:1, worldH:H, lanes:[], runners:[], lead:null, timer:null,
+        boss:{hp:game.event.mageHp, maxHp:MAGE_HP, wear:MAGE_WEAR, el:null,hpEl:null,barEl:null,dead:false,_fw:0} };
+  buildMage(H); setWorldView(0);
+}
+
+// ---- the mage fight ----
+function launchEvent(){
+  if(game.running) return;
+  const lanePicks=[]; let total=0; launchSnapshot=[];
+  for(let c=0;c<LANES;c++){ const arr=[]; for(let r=0;r<3;r++){ const idx=r*LANES+c;
+    if(game.grid[idx]){ const cell=game.grid[idx]; const rem=(cell.uses==null?MAX_USES:cell.uses)-1;   // one launch used
+      arr.push(cell.level); launchSnapshot.push({idx,level:cell.level,uses:rem}); game.grid[idx]=null; total++; } } lanePicks.push(arr); }
+  if(total===0){ toast('Сначала купи кирку'); return; }
+  audioInit(); for(let i=0;i<SLOTS;i++) renderSlot(i);
+  game.running=true;
+  const H=$('#camera').clientHeight||320;
+  dig={ blockH:72, giftRow:0, rows:1, worldH:H, lanes:[], runners:[], lead:null, timer:null, _round:0,
+        boss:{hp:game.event.mageHp, maxHp:MAGE_HP, wear:MAGE_WEAR, el:null,hpEl:null,barEl:null,dead:false,_fw:0} };
+  buildMageArena(lanePicks);
+  setWorldView(0);
+  $('#levelTag').textContent='🧙 ЗЛОЙ МАГ'; $('#digStatus').textContent='в бой!';
+  document.body.classList.add('digging');
+  playEventMusic(); refreshUI();
+  dig.timer=setInterval(tick,110);
+}
+function buildMageArena(lanePicks){
+  const lanesEl=$('#lanes'); lanesEl.innerHTML='';
+  const ob=$('#camera').querySelector('.bossBar'); if(ob) ob.remove();
+  dig.lanes=[]; dig.runners=[]; dig.lead=null;
+  const laneDivs=[];
+  for(let li=0;li<LANES;li++){ const lane=document.createElement('div'); lane.className='lane'; lanesEl.appendChild(lane); laneDivs.push(lane); }
+  const lw=Math.round(laneDivs[0].clientWidth); dig.blockH = lw>20?lw:72;
+  const H=dig.worldH;
+  const mageTop=Math.round(H*0.40);
+  const fightTop=Math.round(mageTop + dig.blockH*0.45);   // picks land on the mage's head
+  if(lanePicks){
+    for(let li=0;li<LANES;li++){
+      const levels=lanePicks[li];
+      if(levels && levels.length){
+        const run=makeRunner(li,levels);
+        run.fighting=true; run.row=0;
+        run.el.style.top=fightTop+'px';
+        run.el.classList.add('fighting','swing');
+        run.el.style.transform=`translateX(${(2-li)*dig.blockH*0.5}px)`;   // converge on the mage
+        laneDivs[li].appendChild(run.el);
+        dig.runners.push(run);
+      }
+    }
+  }
+  buildMage(H, mageTop);
+}
+function buildMage(H, mageTop){
+  const m=dig.boss; if(!m) return;
+  const mg=Math.round(dig.blockH*2.0);
+  const el=document.createElement('div'); el.className='mage';
+  el.style.height=mg+'px'; el.style.top=(mageTop!=null?mageTop:Math.round(H*0.40))+'px';
+  el.innerHTML=`<img class="mageImg" src="${TEX.mage}" alt="" style="width:${mg}px;height:${mg}px;">`;
+  $('#lanes').appendChild(el);
+  const bar=document.createElement('div'); bar.className='bossBar mageBar';
+  bar.innerHTML=`<img class="bossBarIcon" src="${TEX.mage}" alt="">`+
+    `<div class="bossBarMid"><div class="bossBarLabel">ЗЛОЙ МАГ</div>`+
+    `<div class="bossHpTrack"><div class="bossHp"></div></div></div>`;
+  $('#camera').appendChild(bar);
+  m.el=el; m.barEl=bar; m.hpEl=bar.querySelector('.bossHp'); m.imgEl=el.querySelector('.mageImg');
+  updateBossHp();
+}
+function tickEvent(){
+  const mage=dig.boss; if(!mage) return;
+  dig._round=(dig._round||0)+1;
+  let anyActive=false, dmg=0;
+  for(const run of dig.runners){
+    const active=run.picks.filter(p=>p.quality>0);   // a pick keeps hitting until its bar drains, then retreats
+    if(!active.length){ run.el.classList.remove('swing'); continue; }
+    anyActive=true;
+    const power=active.reduce((s,p)=>s+p.power,0);
+    const d=power*run.speed; mage.hp-=d; dmg+=d;
+    run.el.classList.add('swing');
+    for(const p of active){ p.quality-=mage.wear; if(p.quality<0)p.quality=0; updatePickQ(p); }   // bar drains
+  }
+  if(dmg>0){
+    const earn=Math.max(1,Math.round(dmg*EVENT_COIN_RATE));
+    game.coins+=earn; renderCoins(); renderBuyBtn();
+    sfxMageHit();                                       // audible thud over the music
+    mage._fw=(mage._fw||0)+1; if(mage._fw%3===0) bossFirework(false);
+  }
+  if(mage.el) mage.el.classList.toggle('hurt', anyActive);
+  updateBossHp();
+  $('#digStatus').textContent=`HP мага: ${Math.max(0,Math.ceil(mage.hp))}`;
+  if(mage.hp<=0){ mageDefeated(); return; }
+  if(!anyActive || dig._round>300){ endEventRound(); return; }   // picks tired out → they retreat
+}
+// the assault is over: the surviving picks retreat, each having spent one of its 3 launches
+function endEventRound(){
+  stopTick(); game.running=false;
+  game.event.mageHp=Math.max(0,dig.boss.hp);
+  $('#digStatus').textContent='раунд окончен';
+  leaveImmersive(()=>{
+    returnPicks(launchSnapshot);   // back to the grid with one less charge; spent (0/3) picks are gone
+    enterEventMenu();
+    refreshUI();
+  });
+}
+function mageDefeated(){
+  stopTick(); game.running=false;
+  dig.boss.hp=0; dig.boss.dead=true; updateBossHp();
+  if(dig.boss.el) dig.boss.el.classList.add('dead');
+  if(dig.boss.barEl) dig.boss.barEl.classList.add('dead');
+  sfxExplode(); boom(); confettiBurst(); bossFirework(true); bossFirework(true);
+  game.event.lastWin=Date.now();         // 24h cooldown begins
+  game.event.mageHp=MAGE_HP;             // reset for the next cycle
+  game.stats.mageWins=(game.stats.mageWins||0)+1;
+  setTimeout(()=>{
+    leaveEvent();                        // back to the normal game…
+    game.coins+=EVENT_REWARD.coins;      // …and hand over the prize
+    EVENT_REWARD.picks.forEach(lv=>grantPick(lv));   // placed on the field, or queued if it's full
+    renderCoins();
+    showMageBanner();
+    syncQuestXp(false);
+    refreshUI();
+  }, 1500);
+}
+function showMageBanner(){
+  sfxComplete();
+  game._mageBanner=true;
+  $('#bannerGift').src=TEX.mage;
+  $('#bannerTitle').textContent='МАГ ПОВЕРЖЕН!';
+  $('#bannerText').innerHTML=`Злой маг разбит! 🎉<br>Награда: <b>+${EVENT_REWARD.coins}</b> монет и кирки <b>12</b> + <b>13</b> уровня.<br>Снова сразиться можно через <b class="evtTimer" id="mageBannerTimer">24ч 00м 00с</b>.`;
+  $('#levelTrackLabel').textContent='СУПЕР ИВЕНТ';
+  $('#levelLine').innerHTML='';
+  $('#bannerBtn').textContent='ЗАБРАТЬ';
+  $('#banner').classList.add('show');
+  updateTimers();
+}
+function confettiBurst(){
+  const lanesEl=$('#lanes'); if(!lanesEl) return;
+  const top = (dig.boss&&dig.boss.el) ? dig.boss.el.offsetTop+dig.boss.el.offsetHeight*0.4 : 120;
+  const cols=['#ff5a5a','#ffd23f','#5ad6ff','#9b5cff','#5cff8f','#ff8f3f','#ffffff','#ff5ad0'];
+  for(let i=0;i<64;i++){
+    const p=document.createElement('i'); p.className='confetti';
+    const c=cols[(Math.random()*cols.length)|0];
+    const dx=(Math.random()*2-1)*dig.blockH*3.4, dy=dig.blockH*(2.4+Math.random()*3.4), rot=(Math.random()*2-1)*900;
+    const dur=1.1+Math.random()*1.2, delay=Math.random()*0.5;
+    p.style.cssText=`left:50%; top:${top}px; background:${c}; --dx:${dx.toFixed(0)}px; --dy:${dy.toFixed(0)}px; --rot:${rot.toFixed(0)}deg; animation-duration:${dur}s; animation-delay:${delay}s;`;
+    lanesEl.appendChild(p);
+    setTimeout(()=>p.remove(),(dur+delay)*1000+220);
+  }
+}
+// ---- event music + hit sfx ----
+let _lastMageHit=0;
+function sfxMageHit(){           // a percussive thud each time the picks land on the mage
+  if(!actx || !game.soundOn) return;
+  const now=performance.now(); if(now-_lastMageHit<85) return; _lastMageHit=now;
+  noiseHit(0.05,0.13);
+  tone(170+Math.random()*40,0.06,'square',0.10,95);
+}
+function playEventMusic(){ const a=$('#eventMusic'); if(!a) return; if(game.soundOn){ a.volume=0.3; a.play().catch(()=>{}); } }
+function stopEventMusic(){ const a=$('#eventMusic'); if(a){ a.pause(); try{a.currentTime=0;}catch(e){} } }
+// remember the highest pick level ever held (for quests)
+function notePick(level){ if(level>(game.stats.maxPickLevel||1)) game.stats.maxPickLevel=level; }
 
 /* =========================================================
    MODALS  (updates list, promo codes, update note)
@@ -2118,9 +2567,8 @@ function redeemPromo(){
   const promo=PROMOS[raw];
   // not in the base, or already redeemed → the same "exhausted" message
   if(!promo || game.usedPromos.includes(raw)){ promoMsg('Промокод не найден или исчерпан', false); return; }
-  if(promo.pick && freeSlots().length===0){ promoMsg('Освободите место в поле для награды', false); return; }
   if(promo.coins) game.coins+=promo.coins;
-  if(promo.pick)  addPickToGrid(promo.pick);
+  if(promo.pick)  grantPick(promo.pick);          // to the field, or the reserve if it's full
   game.usedPromos.push(raw);
   audioInit(); sfxReward();
   promoMsg('Промокод принят: '+promo.label+'!', true);
@@ -2146,7 +2594,7 @@ function renderSettings(){
   const s=$('#setSound'); if(s){ s.textContent=game.soundOn?'Вкл':'Выкл'; s.classList.toggle('on',game.soundOn); }
 }
 function toggleTheme(){ game.lightTheme=!game.lightTheme; applyTheme(); renderSettings(); save(); }
-function toggleSound(){ game.soundOn=!game.soundOn; if(game.soundOn){ audioInit(); sfxBuy(); } renderSettings(); save(); }
+function toggleSound(){ game.soundOn=!game.soundOn; if(game.soundOn){ audioInit(); sfxBuy(); if(game.mode==='event') playEventMusic(); } else { stopEventMusic(); } renderSettings(); save(); }
 
 /* ---- quests ---- */
 function renderQuests(){
@@ -2221,10 +2669,9 @@ function renderPass(){
 function claimTier(i){
   const r=PASS_REWARDS[i]; if(!r) return;
   if(game.claimedTiers.includes(i) || game.passXp<passTierXp(i+1)) return;
-  if(r.pick && freeSlots().length===0){ toast('Освободите место для награды'); return; }
   game.claimedTiers.push(i);
   if(r.coins) game.coins+=r.coins;
-  if(r.pick)  addPickToGrid(r.pick);
+  if(r.pick)  grantPick(r.pick);                  // to the field, or the reserve if it's full
   audioInit(); sfxReward();
   toast(`Награда пропуска: ${passRewardLabel(r)}`);
   refreshUI();
@@ -2283,6 +2730,9 @@ function boot(){
   $('#buyBtn').addEventListener('click',buyPick);
   $('#launchBtn').addEventListener('click',launch);
   $('#bannerBtn').addEventListener('click',onBannerNext);
+  $('#eventBtn').addEventListener('click',onEventBtn);
+  $('#eventStart').addEventListener('click',startEvent);
+  $('#pendingPick').addEventListener('click',onPendingClick);
 
   // ---- top-right actions ----
   $('#updatesBtn').addEventListener('click',()=>openModal('updatesModal'));
@@ -2318,7 +2768,9 @@ function boot(){
   newLevel(game.level);          // build the dig field for the saved/initial level
   renderAllSlots();              // paint any restored picks into the grid
   syncQuestXp(false);            // derive pass XP from existing quest progress (no animation)
+  renderPending();               // show any reward picks waiting for free space
   refreshUI();
+  setInterval(updateTimers, 1000);   // live cooldown timers (event button + win banner)
   maybeShowUpdateNote();         // one-time "update available" note
 }
 
