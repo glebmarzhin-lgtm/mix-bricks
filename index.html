@@ -285,6 +285,11 @@
   .punit.dead img{animation:none !important; transform:rotate(82deg); filter:grayscale(1) brightness(.55);}
   .punit.dead{opacity:.55;}
   .punit.dead .qbar{display:none;}
+  /* event: a pick that ran out of stamina poofs away (cleaner than sitting empty) */
+  .punit.spent{animation:pickPoof .32s ease forwards !important;}
+  .punit.spent img{animation:none !important;}
+  .punit.spent .qbar{display:none;}
+  @keyframes pickPoof{0%{opacity:1;}100%{opacity:0; transform:translateY(10px) scale(.3);}}
   .digger.won .punit img{animation:none;}
   .digger.won .punit{animation:wonbob .7s ease-in-out infinite;}
   @keyframes wonbob{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
@@ -2449,7 +2454,7 @@ function tickEvent(){
     const power=active.reduce((s,p)=>s+p.power,0);
     const d=power*run.speed; mage.hp-=d; dmg+=d;
     run.el.classList.add('swing');
-    for(const p of active){ p.quality-=mage.wear; if(p.quality<0)p.quality=0; updatePickQ(p); }   // bar drains
+    for(const p of active){ p.quality-=mage.wear; if(p.quality<=0){ p.quality=0; if(p.el) p.el.classList.add('spent'); } updatePickQ(p); }   // bar drains → poof away when empty
   }
   if(dmg>0){
     const earn=Math.max(1,Math.round(dmg*EVENT_COIN_RATE));
