@@ -621,10 +621,54 @@
     animation:auraPulse .55s ease-in-out infinite;
   }
   .pick.glow12 img, .punit.glow12 img{ position:relative; z-index:1; }
+  .glowAura.mag{   /* magic acid pick: green glow */
+    background:radial-gradient(circle, rgba(62,216,96,.7) 0%, rgba(120,255,150,.25) 45%, rgba(30,140,60,0) 72%);
+    animation:auraPulse .8s ease-in-out infinite;
+  }
+  .pick.magic img, .punit.magic img{ position:relative; z-index:1; filter:drop-shadow(0 0 5px #3ed860) drop-shadow(0 2px 2px #000a); }
+  .pick .limited{   /* "Limited" tag on the magic pick, top-left */
+    position:absolute; top:-3px; left:-3px; z-index:3;
+    font-size:8px; font-weight:800; letter-spacing:.3px; color:#06210a;
+    background:linear-gradient(#a8ffc0,#3ed860); border:1px solid #0a3a18; border-radius:3px;
+    padding:0 4px; line-height:13px; text-transform:uppercase;
+  }
   @keyframes auraPulse{
     0%,100%{opacity:.5;  transform:scale(.9);}
     50%    {opacity:1;   transform:scale(1.18);}
   }
+  /* block being corroded by acid (a magic pick in the next lane) */
+  .blk.acided{ box-shadow:inset 0 0 12px 3px rgba(62,216,96,.55); }
+  .blk.acided::after{ content:""; position:absolute; inset:0; background:linear-gradient(rgba(62,216,96,.28),rgba(62,216,96,.05)); pointer-events:none; animation:acidPulse .5s ease-in-out infinite; }
+  @keyframes acidPulse{ 0%,100%{opacity:.5;} 50%{opacity:.9;} }
+  /* boss timing mini-game */
+  #miniGame{ position:absolute; left:50%; top:13%; transform:translateX(-50%) scale(.5); z-index:70;
+    opacity:0; transition:opacity .25s ease, transform .28s cubic-bezier(.2,1.7,.4,1); pointer-events:none;
+    filter:drop-shadow(0 0 18px #5cff8f99) drop-shadow(0 6px 14px #000b); }
+  #miniGame.show{ opacity:1; transform:translateX(-50%) scale(1.35); animation:miniBreathe 1s ease-in-out infinite; }
+  @keyframes miniBreathe{ 0%,100%{filter:drop-shadow(0 0 18px #5cff8f99) drop-shadow(0 6px 14px #000b);} 50%{filter:drop-shadow(0 0 32px #5cff8fee) drop-shadow(0 6px 14px #000b);} }
+  #miniGame.hit{ animation:miniHit .4s ease forwards; }
+  #miniGame.miss{ animation:miniMiss .4s ease forwards; }
+  @keyframes miniHit{ 0%{transform:translateX(-50%) scale(1.35);}40%{transform:translateX(-50%) scale(1.65);}100%{transform:translateX(-50%) scale(0); opacity:0;} }
+  @keyframes miniMiss{ 0%{opacity:1;}100%{transform:translateX(-50%) scale(.9); opacity:0;} }
+  #miniGame .mlabel{ animation:mlabelPulse .5s ease-in-out infinite; }
+  @keyframes mlabelPulse{ 0%,100%{opacity:.65;}50%{opacity:1;} }
+  /* first-time tutorial spotlight */
+  #tutorial{ position:fixed; inset:0; z-index:500; display:none; }
+  #tutorial.show{ display:block; }
+  #tutRing{ position:absolute; border-radius:14px; border:3px solid var(--gold);
+    box-shadow:0 0 0 9999px rgba(6,8,14,.78), 0 0 18px var(--glow-gold); transition:all .3s ease; pointer-events:none; }
+  #tutCard{ position:absolute; left:50%; bottom:24px; transform:translateX(-50%); width:min(420px,90vw);
+    background:linear-gradient(#222838,#171b27); border:3px solid var(--frame); border-radius:16px; padding:16px 18px;
+    box-shadow:0 8px 24px #000a; text-align:center; }
+  #tutStep{ font-size:11px; font-weight:800; letter-spacing:1px; color:var(--gold); margin-bottom:6px; }
+  #tutText{ font-size:14px; line-height:1.5; color:var(--ink); margin:0 0 14px; }
+  #tutText b{ color:var(--gold); }
+  .tutBtns{ display:flex; gap:10px; justify-content:center; }
+  #tutSkip,#tutNext{ font-family:inherit; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.5px;
+    border:none; border-radius:11px; padding:11px 18px; cursor:pointer; box-shadow:0 4px 0 #0008; }
+  #tutSkip{ background:#3a3142; color:#cbbfe0; }
+  #tutNext{ background:linear-gradient(#ffd86a,#e0a52b); color:#3a2600; }
+  #tutSkip:active,#tutNext:active{ transform:translateY(2px); box-shadow:0 2px 0 #0008; }
   /* a pick charged by an electric neighbour — sparks, glows, hits harder */
   .digger.electric .punit img{ filter:drop-shadow(0 0 4px #5ad0ff) drop-shadow(0 0 8px #ffe83a); }
   .digger.electric::before{
@@ -966,9 +1010,20 @@
   <div class="modalHead"><span class="modalIcon">⚙️</span><h2>НАСТРОЙКИ</h2></div>
   <div class="setRow"><span class="setLbl">Тема</span><button id="setTheme" class="setToggle">Тёмная</button></div>
   <div class="setRow"><span class="setLbl">Звук</span><button id="setSound" class="setToggle on">Вкл</button></div>
+  <div class="setRow"><span class="setLbl">Обучение</span><button id="setTutorial" class="setToggle">Туториал</button></div>
   <div class="setAbout"><b>V0.2.9</b><br>© Mix Bricks</div>
   <button class="btn go modalDone" data-close="settingsModal">ЗАКРЫТЬ</button>
 </div></div>
+
+<!-- first-time tutorial (spotlight) -->
+<div id="tutorial">
+  <div id="tutRing"></div>
+  <div id="tutCard">
+    <div id="tutStep"></div>
+    <p id="tutText"></p>
+    <div class="tutBtns"><button id="tutSkip">Пропустить</button><button id="tutNext">Далее</button></div>
+  </div>
+</div>
 
 <script>
 "use strict";
@@ -1024,10 +1079,16 @@ function makeBlockTex(def){
   return c.toDataURL();
 }
 
-function makeCrack(){
+// 3 distinct crack patterns so breaking blocks don't all look the same
+const CRACK_SEGS = [
+  [[8,0,7,5],[7,5,10,8],[10,8,8,13],[8,13,9,16],[7,5,3,7],[10,8,14,9]],     // 0: forking vein
+  [[8,8,3,2],[8,8,14,3],[8,8,2,12],[8,8,13,14],[8,8,8,0],[8,8,8,16]],       // 1: star burst from centre
+  [[2,2,8,8],[8,8,14,14],[14,2,8,8],[8,8,2,14],[8,1,8,8],[8,8,8,15]],       // 2: X / Ж — crossed diagonals + vertical
+];
+function makeCrack(v){
   const S=16, scale=4; const {c,x}=cv(S*scale);
+  const seg=CRACK_SEGS[v||0];
   x.strokeStyle='rgba(0,0,0,.85)'; x.lineWidth=scale*0.8; x.lineCap='square';
-  const seg=[[8,0,7,5],[7,5,10,8],[10,8,8,13],[8,13,9,16],[7,5,3,7],[10,8,14,9]];
   seg.forEach(([a,b,d,e])=>{ x.beginPath(); x.moveTo(a*scale,b*scale); x.lineTo(d*scale,e*scale); x.stroke(); });
   x.strokeStyle='rgba(255,255,255,.18)'; x.lineWidth=scale*0.35;
   seg.forEach(([a,b,d,e])=>{ x.beginPath(); x.moveTo(a*scale+1,b*scale); x.lineTo(d*scale+1,e*scale); x.stroke(); });
@@ -1151,6 +1212,7 @@ const METAL = {
  11:['#ffffff','#c8e8ff','#7090b8'],   // diamond
  12:['#ffffff','#35d6ff','#0e72ad'],   // electric (charges a neighbour pick)
  13:['#ffd27a','#ff6a18','#8a2a06'],   // molten (explosive top tier)
+ 14:['#c8ffd6','#3ed860','#13742f'],   // magic (acid green — event-only "Limited" pick)
 };
 // blend a hex colour toward white for a highlight tone
 function lighten(hex, amt=0.5){
@@ -1297,12 +1359,14 @@ function makeMage(){
 /* =========================================================
    TEXTURE CACHE
    ========================================================= */
-const TEX = { picks:{}, blocks:{}, gift:'', coin:'', coinBlue:'', crack:'', zombie:'', mage:'' };
+const TEX = { picks:{}, blocks:{}, gift:'', coin:'', coinBlue:'', crack:[], zombie:'', mage:'' };
 function buildTextures(){
   for(let lv=1;lv<=MAX_LEVEL;lv++) TEX.picks[lv]=makePick(lv);
+  TEX.picks[MAGIC_LEVEL]=makePick(MAGIC_LEVEL);            // the event "magic" pick (acid green)
   for(const k in BLOCKS) TEX.blocks[k]=makeBlockTex(BLOCKS[k]);
   TEX.gift=makeGift(); TEX.coin=makeCoin(COIN_GOLD); TEX.coinBlue=makeCoin(COIN_BLUE);
-  TEX.crack=makeCrack(); TEX.zombie=makeZombie(); TEX.mage=makeMage();
+  TEX.crack=[makeCrack(0),makeCrack(1),makeCrack(2)];      // 3 break patterns
+  TEX.zombie=makeZombie(); TEX.mage=makeMage();
 }
 
 /* =========================================================
@@ -1314,13 +1378,14 @@ const BASE_PRICE = 5;
 const MAX_LEVEL = 13;        // highest pick level (12 = electric, 13 = explosive)
 const MAX_GAME_LEVEL = 20;   // the game has 20 dig levels in total
 const MAX_USES = 3;          // a pick can be launched 3 times before it's used up
+const MAGIC_LEVEL = 14;      // sentinel "level" for the event-only magic acid pick
 // ---- SUPER EVENT: the evil mage (a separate blue-coin game mode) ----
 const EVENT_END     = '20.06.2026';            // event closes after this date
 const EVENT_END_TS  = new Date(2026,5,21).getTime();  // 21 Jun 2026 00:00 (month 0-based)
 const MAGE_HP       = 17500;                    // big — beaten across many launches (tunable)
 const MAGE_WEAR     = 4;                         // picks tire as they hammer — the bar drains, then they retreat
 const EVENT_COIN_RATE = 1.2;                    // blue coins earned per point of damage dealt
-const EVENT_COOLDOWN_MS = 12*60*60*1000;        // beat the mage once per 12h
+const EVENT_COOLDOWN_MS = 13*60*60*1000;        // beat the mage once per 13h
 const EVENT_CD_VERSION = 1;                     // bump to one-time-reset every player's cooldown
 const EVENT_REWARD = {coins:1000, picks:[12,13]};   // chest prize → carried to the normal game
 // purchases needed WITHIN each tier to reach the next pick level:
@@ -1350,6 +1415,8 @@ const game = {
   event:{ coins:10, grid:new Array(SLOTS).fill(null), purchases:0, mageHp:MAGE_HP, lastWin:0 },
   eventCdV:EVENT_CD_VERSION,   // cooldown-reset version the player has applied
   pending:[],        // reward picks waiting for free space on the normal field (levels)
+  gotMagic:false,    // the one-time magic pick (first mage win) already given?
+  tutorialDone:false,// has the player seen the first-time tutorial?
 };
 
 function pickPower(lv){ return lv; }
@@ -1378,10 +1445,12 @@ function tierState(){
 // entries are sorted by date when rendered (oldest on top, newest at the bottom)
 const CHANGELOG = [
   {date:'14.06.2026', title:'🧙 Супер ивент: злой маг',
-   text:'Новый режим! Жми на крутящуюся кнопку справа внизу и сразись со злым магом. Это отдельная игра: своя голубая валюта, всё с нуля, а вместо блоков — огромный маг. У каждой кирки тут только 3 запуска (видно на ячейке: 3/3 → 1/3), зато за урон по магу капают монеты — прокачивай кирки и бей дальше. Маг очень живучий! Одолеешь — он взрывается конфетти, а в награду 1000 монет и кирки 12 + 13 уровня в основную игру. Мага можно одолеть раз в 12 часов, ивент идёт до 20.06.2026. А ещё в обычной игре теперь 20 уровней — боссы-зомби ждут на 5, 10, 15 и 20!'},
+   text:'Новый режим! Жми на крутящуюся кнопку справа внизу и сразись со злым магом. Это отдельная игра: своя голубая валюта, всё с нуля, а вместо блоков — огромный маг. У каждой кирки тут только 3 запуска (видно на ячейке: 3/3 → 1/3), зато за урон по магу капают монеты — прокачивай кирки и бей дальше. Маг очень живучий! Одолеешь — он взрывается конфетти, а в награду 1000 монет и кирки 12 + 13 уровня в основную игру. Мага можно одолеть раз в 13 часов, ивент идёт до 20.06.2026. А ещё в обычной игре теперь 20 уровней — боссы-зомби ждут на 5, 10, 15 и 20!'},
+  {date:'15.06.2026', title:'Gameplay Snapshot',
+   text:'Мы собрали много информации и идей, чтобы вам было интереснее играть, и готовы показать первую версию. Теперь на боссе 20 уровня есть мини-игра, и в ивенте тоже — попади по зелёной зоне круга и нанеси боссу мощный удар (так легче). Добавили обучалку: она откроется, если вы зашли впервые, или вручную — Настройки → Туториал. Ещё больше визуальных эффектов: блоки ломаются по-разному, у событий свои эффекты. И добавили ивентовую «магическую кирку» (Limited) — она окисляет соседние блоки зелёной кислотой, и они копаются быстрее. Получить её можно только за победу над магом.'},
 ];
 // the newest changelog date — bump to re-show the "update available" note
-const LATEST_UPDATE = '14.06.2026';
+const LATEST_UPDATE = '15.06.2026';
 // promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
   'bug22':   {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
@@ -1450,6 +1519,8 @@ function save(){
       event:ev,
       eventCdV:game.eventCdV,
       pending:game.pending,
+      gotMagic:game.gotMagic,
+      tutorialDone:game.tutorialDone,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -1477,6 +1548,8 @@ function load(){
     game.lightTheme = !!s.lightTheme;
     game.bossHp = (s.bossHp && typeof s.bossHp==='object') ? s.bossHp : {};
     game.pending = Array.isArray(s.pending) ? s.pending.filter(x=>Number.isFinite(x)) : [];
+    game.gotMagic = !!s.gotMagic;
+    game.tutorialDone = !!s.tutorialDone;
     game.mode = 'normal';                       // always resume in the normal game
     if(s.event && typeof s.event==='object'){
       const e=s.event;
@@ -1544,13 +1617,19 @@ function buildGrid(){
 function freeSlots(){ const f=[]; for(let i=0;i<SLOTS;i++) if(!game.grid[i]) f.push(i); return f; }
 
 function makePickEl(level, uses){
-  const p=document.createElement('div'); p.className='pick spawn'+(level>=12?' glow12':'');
+  const isMagic = level===MAGIC_LEVEL;
+  const p=document.createElement('div'); p.className='pick spawn'+(isMagic?' magic':(level>=12?' glow12':''));
   const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
-  const lv=document.createElement('span'); lv.className='lv'; lv.textContent=level;
-  if(level>=12){ const a=document.createElement('div'); a.className='glowAura'+(level===12?' el':''); p.appendChild(a); }
+  const lv=document.createElement('span'); lv.className='lv'; lv.textContent=isMagic?'✦':level;
+  if(isMagic){ const a=document.createElement('div'); a.className='glowAura mag'; p.appendChild(a); }
+  else if(level>=12){ const a=document.createElement('div'); a.className='glowAura'+(level===12?' el':''); p.appendChild(a); }
   p.appendChild(img); p.appendChild(lv);
-  const u=(uses==null?MAX_USES:uses);
-  const ub=document.createElement('span'); ub.className='uses'+(u<=1?' low':''); ub.textContent=u+'/'+MAX_USES; p.appendChild(ub);
+  if(isMagic){
+    const lim=document.createElement('span'); lim.className='limited'; lim.textContent='Limited'; p.appendChild(lim);
+  } else {
+    const u=(uses==null?MAX_USES:uses);
+    const ub=document.createElement('span'); ub.className='uses'+(u<=1?' low':''); ub.textContent=u+'/'+MAX_USES; p.appendChild(ub);
+  }
   p.addEventListener('pointerdown',onPickDown);
   setTimeout(()=>p.classList.remove('spawn'),300);
   return p;
@@ -1793,7 +1872,7 @@ function blockEl(key,h,bossFloor){
     const hl=document.createElement('div'); hl.className='blkHl';   // white "being broken" glow
     d.appendChild(hl); d._hl=hl;
     const cr=document.createElement('div'); cr.className='crack';
-    cr.style.backgroundImage=`url(${TEX.crack})`;
+    cr.style.backgroundImage=`url(${TEX.crack[(Math.random()*TEX.crack.length)|0]})`;   // random of 3 patterns
     d.appendChild(cr); d._crack=cr;
   }
   return d;
@@ -1806,7 +1885,8 @@ function makeRunner(laneIdx, levels){
   const restTop=Math.round(-dig.blockH*0.74 + 12);  // sit ON the block, not inside it
   const picks=[];
   levels.forEach((lv,i)=>{
-    const u=document.createElement('div'); u.className='punit'+(lv>=12?' glow12':'');
+    const isMagic = lv===MAGIC_LEVEL;
+    const u=document.createElement('div'); u.className='punit'+(isMagic?' magic':(lv>=12?' glow12':''));
     u.style.left=(50+(i-(n-1)/2)*16)+'%';     // same size, fanned (overlap ok)
     u.style.top=restTop+'px';
     u.style.zIndex=String(10+i);
@@ -1814,10 +1894,11 @@ function makeRunner(laneIdx, levels){
     q.style.top=(-8-i*7)+'px';                 // stack health bars so each is visible
     const qi=document.createElement('i'); q.appendChild(qi);
     const img=document.createElement('img'); img.src=TEX.picks[lv]; img.alt='';
-    if(lv>=12){ const a=document.createElement('div'); a.className='glowAura'+(lv===12?' el':''); u.appendChild(a); }
+    if(isMagic){ const a=document.createElement('div'); a.className='glowAura mag'; u.appendChild(a); }
+    else if(lv>=12){ const a=document.createElement('div'); a.className='glowAura'+(lv===12?' el':''); u.appendChild(a); }
     u.appendChild(q); u.appendChild(img);
     el.appendChild(u);
-    picks.push({level:lv,power:pickPower(lv),maxQ:pickMaxQ(lv),
+    picks.push({level:lv,magic:isMagic,power:pickPower(lv),maxQ:pickMaxQ(lv),
                 quality:pickMaxQ(lv),alive:true,el:u,qbar:qi});
   });
   return {lane:laneIdx,row:0,progress:0,finished:false,el,picks,
@@ -1974,12 +2055,20 @@ function coinFx(laneEl,row,val){
   f.style.top=(row*dig.blockH+4)+'px';
   laneEl.appendChild(f); setTimeout(()=>f.remove(),800);
 }
+// normal (gold) coins are nerfed ~10%; sources giving 1 coin (copper) stay 1.
+// stochastic rounding keeps coins whole while the TOTAL really drops ~10%.
+function coinGain(n){
+  if(n<=1) return n;
+  const v=n*0.9, base=Math.floor(v);
+  return base + (Math.random() < (v-base) ? 1 : 0);
+}
 function breakBlock(lane,row,b,silent){
   if(b.broken) return; b.broken=true;
   b.el.classList.add('breaking');
   setTimeout(()=>b.el.classList.add('broken'),110);
-  game.coins+=b.coins; game.runCoins+=b.coins;
-  if(b.coins>0) coinFx(lane.el,row,b.coins);
+  const g=coinGain(b.coins);                 // −10% (copper stays 1)
+  game.coins+=g; game.runCoins+=g;
+  if(g>0) coinFx(lane.el,row,g);
   game.stats.blocksDug++;
   renderCoins();
   if(!silent) sfxDig();
@@ -2047,6 +2136,11 @@ function onReachGift(run){
 function tick(){
   if(!dig||!game.running) return;
   if(game.mode==='event'){ tickEvent(); return; }        // super-event mage fight
+  // magic pick: its acid corrodes the immediately adjacent lanes (1-block range) → they dig faster
+  const acidLanes=new Set();
+  for(const r of dig.runners){
+    if(!r.finished && !r.fighting && r.picks.some(p=>p.alive && p.magic)){ acidLanes.add(r.lane-1); acidLanes.add(r.lane+1); }
+  }
   for(const run of dig.runners){
     if(run.finished) continue;
     const alivePicks=run.picks.filter(p=>p.alive);
@@ -2068,6 +2162,7 @@ function tick(){
     if(!b){ run.finished=true; continue; }
     if(b.broken){ run.progress=0; advanceRunner(run); continue; }   // skip cleared blocks
     run.progress += power*run.speed;
+    if(acidLanes.has(run.lane)){ run.progress += power*run.speed*0.9; if(b.el) b.el.classList.add('acided'); }   // green acid → side lane digs faster
     for(const p of alivePicks){
       p.quality-=b.wear;
       if(p.quality<=0){ p.quality=0; killPick(p); if(p.level>=13) explodeAt(run.lane,run.row); }
@@ -2089,9 +2184,10 @@ function tick(){
     const fighting=dig.runners.some(r=>r.fighting && !r.finished && r.picks.some(p=>p.alive));
     if(dig.boss.el) dig.boss.el.classList.toggle('hurt', fighting);
     if(fighting){ dig.boss._fw=(dig.boss._fw||0)+1; if(dig.boss._fw%3===0) bossFirework(false); }   // salute while it's hit
+    if(fighting && game.level===MAX_GAME_LEVEL){ dig.boss._mt=(dig.boss._mt||0)+1; if(dig.boss._mt%38===0 && !miniActive) showMiniGame(miniHitBonus); }   // lvl-20 boss mini-game (more frequent)
     updateBossHp();
     if(dig.boss.hp<=0){
-      dig.boss.hp=0; dig.boss.dead=true; updateBossHp();
+      dig.boss.hp=0; dig.boss.dead=true; updateBossHp(); cancelMiniGame();
       if(dig.boss.el) dig.boss.el.classList.add('dead');
       if(dig.boss.barEl) dig.boss.barEl.classList.add('dead');
       sfxExplode(); bossFirework(true); bossFirework(true);   // big farewell salute
@@ -2112,6 +2208,7 @@ function tick(){
 function stopTick(){
   if(dig&&dig.timer){ clearInterval(dig.timer); dig.timer=null; }
   if(dig) dig.runners.forEach(r=>r.el.classList.remove('swing'));
+  cancelMiniGame();
 }
 
 /* ---- launch ---- */
@@ -2179,6 +2276,7 @@ function onLevelComplete(winners){
   let reward=0;
   winners.forEach(()=>{ reward += rndInt(12,32); });   // each chest pays up to ~32
   if(wasBoss) reward += rndInt(50,90);                  // boss bounty
+  reward = coinGain(reward);                            // −10% normal-coin nerf
   game.coins+=reward; game.runCoins+=reward;
   game.stats.levelsWon = Math.max(game.stats.levelsWon, game.level);   // for quests
   renderCoins();
@@ -2314,7 +2412,7 @@ function renderEventBtn(){
 function onEventBtn(){
   if(game.running) return;
   if(game.mode==='event'){ leaveEvent(); return; }
-  if(eventAvailableInMs()>0){ toast('Выигрывать ивент можно только раз в 12 часов'); return; }   // on cooldown
+  if(eventAvailableInMs()>0){ toast('Выигрывать ивент можно только раз в 13 часов'); return; }   // on cooldown
   openEventModal();
 }
 // 1-second clock for the live cooldown timers (button tag + win banner)
@@ -2327,7 +2425,7 @@ let eventTimerId=null;
 function openEventModal(){
   const left=eventAvailableInMs();
   let html=`Награда: <b>1000</b> монет + кирка <b>12</b> и <b>13</b> уровня.<br>`+
-           `Ивент заканчивается <b>${EVENT_END}</b>. Мага можно одолеть раз в 12 часов.`;
+           `Ивент заканчивается <b>${EVENT_END}</b>. Мага можно одолеть раз в 13 часов.`;
   if(left>0) html+=`<br><span class="evtTimer">Снова доступно через ${fmtDur(left)}</span>`;
   $('#eventInfo').innerHTML=html;
   const start=$('#eventStart'); start.disabled=left>0; start.textContent=left>0?'НА ПЕРЕЗАРЯДКЕ':'НАЧАТЬ';
@@ -2470,9 +2568,10 @@ function tickEvent(){
   }
   if(mage.el) mage.el.classList.toggle('hurt', anyActive);
   updateBossHp();
+  if(anyActive && dig._round>0 && dig._round%55===0 && !miniActive) showMiniGame(miniHitBonus);   // ~every 6s
   $('#digStatus').textContent=`HP мага: ${Math.max(0,Math.ceil(mage.hp))}`;
-  if(mage.hp<=0){ mageDefeated(); return; }
-  if(!anyActive || dig._round>300){ endEventRound(); return; }   // picks tired out → they retreat
+  if(mage.hp<=0){ cancelMiniGame(); mageDefeated(); return; }
+  if(!anyActive || dig._round>300){ cancelMiniGame(); endEventRound(); return; }   // picks tired out → they retreat
 }
 // the assault is over: the surviving picks retreat, each having spent one of its 3 launches
 function endEventRound(){
@@ -2498,18 +2597,22 @@ function mageDefeated(){
     leaveEvent();                        // back to the normal game…
     game.coins+=EVENT_REWARD.coins;      // …and hand over the prize
     EVENT_REWARD.picks.forEach(lv=>grantPick(lv));   // placed on the field, or queued if it's full
+    const firstMagic = !game.gotMagic;
+    if(firstMagic){ grantPick(MAGIC_LEVEL); game.gotMagic=true; }   // one-time "Limited" magic pick
     renderCoins();
-    showMageBanner();
+    showMageBanner(firstMagic);
     syncQuestXp(false);
     refreshUI();
   }, 1500);
 }
-function showMageBanner(){
+function showMageBanner(firstMagic){
   sfxComplete();
   game._mageBanner=true;
   $('#bannerGift').src=TEX.mage;
   $('#bannerTitle').textContent='МАГ ПОВЕРЖЕН!';
-  $('#bannerText').innerHTML=`Злой маг разбит! 🎉<br>Награда: <b>+${EVENT_REWARD.coins}</b> монет и кирки <b>12</b> + <b>13</b> уровня.<br>Снова сразиться можно через <b class="evtTimer" id="mageBannerTimer">12ч 00м 00с</b>.`;
+  $('#bannerText').innerHTML=`Злой маг разбит! 🎉<br>Награда: <b>+${EVENT_REWARD.coins}</b> монет и кирки <b>12</b> + <b>13</b> уровня.`+
+    (firstMagic?`<br>✦ И уникальная <b>магическая кирка</b> (Limited)!`:``)+
+    `<br>Снова сразиться можно через <b class="evtTimer" id="mageBannerTimer">13ч 00м 00с</b>.`;
   $('#levelTrackLabel').textContent='СУПЕР ИВЕНТ';
   $('#levelLine').innerHTML='';
   $('#bannerBtn').textContent='ЗАБРАТЬ';
@@ -2541,7 +2644,94 @@ function sfxMageHit(){           // a percussive thud each time the picks land o
 function playEventMusic(){ const a=$('#eventMusic'); if(!a) return; if(game.soundOn){ a.volume=0.3; a.play().catch(()=>{}); } }
 function stopEventMusic(){ const a=$('#eventMusic'); if(a){ a.pause(); try{a.currentTime=0;}catch(e){} } }
 // remember the highest pick level ever held (for quests)
-function notePick(level){ if(level>(game.stats.maxPickLevel||1)) game.stats.maxPickLevel=level; }
+function notePick(level){ if(level<=MAX_LEVEL && level>(game.stats.maxPickLevel||1)) game.stats.maxPickLevel=level; }
+
+/* =========================================================
+   BOSS TIMING MINI-GAME — tap when the pointer is on the green zone → bonus damage
+   ========================================================= */
+let miniActive=false, miniRAF=0, miniAngle=0, miniZoneStart=0, miniZoneSize=58, miniOnHit=null, miniHideTO=0;
+function showMiniGame(onHit){
+  if(miniActive || !dig) return;
+  const cam=$('#camera'); if(!cam) return;
+  miniActive=true; miniOnHit=onHit;
+  miniZoneSize=58; miniZoneStart=Math.random()*360; miniAngle=Math.random()*360;
+  let mg=document.getElementById('miniGame'); if(mg) mg.remove();
+  mg=document.createElement('div'); mg.id='miniGame';
+  const cx=60,cy=60,R=46,W=11,C=2*Math.PI*R, arc=C*miniZoneSize/360;
+  mg.innerHTML=`<svg viewBox="0 0 120 120" width="118" height="118">`+
+    `<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(8,6,16,.55)" stroke="#2a2440" stroke-width="${W}"/>`+
+    `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#5cff8f" stroke-width="${W}" stroke-linecap="butt"`+
+      ` stroke-dasharray="${arc.toFixed(1)} ${(C-arc).toFixed(1)}" transform="rotate(${(miniZoneStart-90).toFixed(1)} ${cx} ${cy})"/>`+
+    `<g id="miniPtr"><circle cx="${cx}" cy="${cy-R}" r="9.5" fill="#ffe23f" stroke="#0a0618" stroke-width="2.5"/><circle cx="${cx}" cy="${cy-R}" r="3.4" fill="#fff"/></g>`+
+    `<text class="mlabel" x="${cx}" y="${cy+5.5}" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">ТАП!</text>`+
+    `</svg>`;
+  cam.appendChild(mg);
+  const ptr=mg.querySelector('#miniPtr');
+  requestAnimationFrame(()=>{ if(mg) mg.classList.add('show'); });
+  const speed=4.6;
+  const step=()=>{ if(!miniActive) return; miniAngle=(miniAngle+speed)%360; if(ptr) ptr.setAttribute('transform',`rotate(${miniAngle.toFixed(1)} ${cx} ${cy})`); miniRAF=requestAnimationFrame(step); };
+  miniRAF=requestAnimationFrame(step);
+  document.addEventListener('pointerdown', miniTap, true);
+  miniHideTO=setTimeout(()=>endMiniGame(false), 3600);
+}
+function miniInZone(){ const d=((miniAngle-miniZoneStart)%360+360)%360; return d<=miniZoneSize; }
+function miniTap(e){ if(!miniActive) return; endMiniGame(miniInZone()); }
+function endMiniGame(hit){
+  if(!miniActive) return; miniActive=false;
+  cancelAnimationFrame(miniRAF); clearTimeout(miniHideTO);
+  document.removeEventListener('pointerdown', miniTap, true);
+  const mg=document.getElementById('miniGame');
+  if(mg){ mg.classList.remove('show'); mg.classList.add(hit?'hit':'miss'); setTimeout(()=>{ if(mg&&mg.parentNode) mg.remove(); },380); }
+  const cb=miniOnHit; miniOnHit=null;
+  if(hit && cb) cb();
+}
+function cancelMiniGame(){
+  if(miniActive){ miniActive=false; cancelAnimationFrame(miniRAF); clearTimeout(miniHideTO); document.removeEventListener('pointerdown', miniTap, true); }
+  const mg=document.getElementById('miniGame'); if(mg) mg.remove();
+}
+// a perfect-timed tap deals a chunk of bonus damage to the current boss
+function miniHitBonus(){
+  if(!dig || !dig.boss || dig.boss.dead) return;
+  dig.boss.hp -= dig.boss.maxHp*0.06; if(dig.boss.hp<0) dig.boss.hp=0;
+  updateBossHp(); bossFirework(true); sfxExplode();
+  toast('Идеально! Мощный удар по боссу ⚡');
+}
+
+/* =========================================================
+   FIRST-TIME TUTORIAL (spotlight)
+   ========================================================= */
+const TUTORIAL = [
+  {sel:'#buyBtn',    text:'Нажми <b>«Купить»</b> — в поле появится кирка. Кирки копают землю.'},
+  {sel:'#mergeGrid', text:'Скрести две <b>одинаковые</b> кирки — перетащи одну на другую. Выйдет кирка уровнем выше, она копает лучше.'},
+  {sel:'#mergeGrid', text:'Ненужную кирку <b>перетащи за пределы поля</b> — она исчезнет. Есть 3 секунды, чтобы передумать: нажми на неё, и она вернётся.'},
+  {sel:'#launchBtn', text:'Когда готов — жми <b>«Запустить»</b>. Кирки сами копают вглубь до сундука с наградой.'},
+  {sel:'#updatesBtn',text:'Заглядывай в <b>«Обновления»</b> — там новости и важные детали. Стоит их читать: иногда там больше информации, чем кажется.'},
+  {sel:null,         text:'Проходи уровни, бей <b>боссов</b> на 5/10/15/20, а кнопка 🧙 справа внизу — <b>супер-ивент</b>. Удачи!'},
+];
+let tutStep=0;
+function startTutorial(){
+  if(game.running || game.mode==='event') return;
+  document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));
+  tutStep=0; $('#tutorial').classList.add('show'); showTutStep();
+}
+function showTutStep(){
+  const s=TUTORIAL[tutStep]; if(!s){ endTutorial(); return; }
+  $('#tutStep').textContent=`Шаг ${tutStep+1} из ${TUTORIAL.length}`;
+  $('#tutText').innerHTML=s.text;
+  $('#tutNext').textContent = tutStep===TUTORIAL.length-1 ? 'ИГРАТЬ' : 'ДАЛЕЕ';
+  const ring=$('#tutRing'); const tgt = s.sel ? $(s.sel) : null;
+  if(tgt){
+    const r=tgt.getBoundingClientRect(); const pad=8;
+    ring.style.borderColor='var(--gold)';
+    ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
+    ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
+  } else {
+    ring.style.borderColor='transparent';
+    ring.style.left='50%'; ring.style.top='42%'; ring.style.width='0px'; ring.style.height='0px';
+  }
+}
+function tutNext(){ tutStep++; if(tutStep>=TUTORIAL.length) endTutorial(); else showTutStep(); }
+function endTutorial(){ $('#tutorial').classList.remove('show'); game.tutorialDone=true; save(); }
 
 /* =========================================================
    MODALS  (updates list, promo codes, update note)
@@ -2735,7 +2925,7 @@ function boot(){
   $('#coinIcon').src=TEX.coin;
   buildGrid();
 
-  load();                       // restore saved progress (no-op on first run)
+  const hadSave = load();       // restore saved progress (false on a brand-new run)
 
   // ---- core controls ----
   $('#buyBtn').addEventListener('click',buyPick);
@@ -2755,6 +2945,9 @@ function boot(){
   $('#settingsBtn').addEventListener('click',()=>{ renderSettings(); openModal('settingsModal'); });
   $('#setTheme').addEventListener('click',toggleTheme);
   $('#setSound').addEventListener('click',toggleSound);
+  $('#setTutorial').addEventListener('click',()=>{ closeModal('settingsModal'); startTutorial(); });
+  $('#tutNext').addEventListener('click',tutNext);
+  $('#tutSkip').addEventListener('click',endTutorial);
   applyTheme();   // apply the saved theme
 
   // ---- promo modal ----
@@ -2782,7 +2975,12 @@ function boot(){
   renderPending();               // show any reward picks waiting for free space
   refreshUI();
   setInterval(updateTimers, 1000);   // live cooldown timers (event button + win banner)
-  maybeShowUpdateNote();         // one-time "update available" note
+  if(!hadSave && !game.tutorialDone){           // brand-new player → teach the basics
+    game.seenUpdate = LATEST_UPDATE;            // (skip the "update available" note for them)
+    setTimeout(startTutorial, 450);
+  } else {
+    maybeShowUpdateNote();                       // returning player → one-time "update available" note
+  }
 }
 
 boot();
