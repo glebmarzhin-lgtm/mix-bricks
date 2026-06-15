@@ -36,17 +36,30 @@
     display:flex; flex-direction:column; gap:10px;
   }
   /* settings gear — compact square button sitting at the end of the action row */
-  #settingsBtn{
+  #chestBtn{
     flex:0 0 38px; align-self:stretch;
     display:flex; align-items:center; justify-content:center;
     padding:0; cursor:pointer; font-size:18px; line-height:1; color:var(--ink);
     background:linear-gradient(180deg,#444b65,#323950);
     border:2px solid var(--frame); border-radius:10px;
     box-shadow:inset 0 0 0 2px var(--frame2), inset 0 1px 0 #ffffff1f, 0 3px 0 #05030a, 0 4px 7px #00000044;
-    transition:transform .25s ease, filter .1s; touch-action:manipulation;
+    transition:transform .1s ease, filter .1s; touch-action:manipulation;
   }
-  #settingsBtn:hover{filter:brightness(1.08);}
-  #settingsBtn:active{transform:translateY(2px);}
+  #chestBtn img{ width:24px; height:24px; image-rendering:pixelated; filter:drop-shadow(0 1px 1px #0008); }
+  #chestBtn:hover{filter:brightness(1.08);}
+  #chestBtn:active{transform:translateY(2px);}
+  body.eventmode #chestBtn{ display:none; }   /* storage is a normal-game feature */
+  /* settings — floating round button, bottom-left (mirror of the event button) */
+  #settingsBtn{
+    position:fixed; left:14px; bottom:16px; z-index:95;
+    width:60px; height:60px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:26px; color:#fff;
+    background:radial-gradient(circle at 50% 35%, #4a5270, #2a3047);
+    border:3px solid var(--frame); box-shadow:inset 0 0 0 2px var(--frame2), 0 4px 8px #000a;
+    transition:transform .42s cubic-bezier(.5,0,.25,1), filter .1s; touch-action:manipulation;
+  }
+  #settingsBtn:hover{ filter:brightness(1.1); }
+  body.digging #settingsBtn{ transform:translateX(-175%); }   /* slides off left during a run */
 
   /* ---- pixel frame helper ---- */
   .pix{
@@ -669,6 +682,30 @@
   #tutSkip{ background:#3a3142; color:#cbbfe0; }
   #tutNext{ background:linear-gradient(#ffd86a,#e0a52b); color:#3a2600; }
   #tutSkip:active,#tutNext:active{ transform:translateY(2px); box-shadow:0 2px 0 #0008; }
+
+  /* ---------- chest storage drawer ---------- */
+  #storeBackdrop{ position:fixed; inset:0; z-index:120; background:rgba(6,8,14,.72); display:none; }
+  body.storeopen #storeBackdrop{ display:block; }
+  body.storeopen #mergePanel{ position:relative; z-index:122; box-shadow:0 0 0 3px var(--gold), 0 0 22px #ffd86a55; border-radius:14px; }
+  body.storeopen .pick.dragging{ z-index:300; }
+  #storeDrawer{
+    position:fixed; left:50%; bottom:0; transform:translateX(-50%) translateY(110%);
+    width:min(440px,100%); z-index:122; background:linear-gradient(#242a3a,#171b27);
+    border:3px solid var(--frame); border-bottom:none; border-radius:18px 18px 0 0;
+    padding:12px 20px calc(16px + env(safe-area-inset-bottom)); box-shadow:0 -8px 24px #000a;
+    transition:transform .3s cubic-bezier(.2,1,.4,1); box-sizing:border-box;
+  }
+  body.storeopen #storeDrawer{ transform:translateX(-50%) translateY(0); }
+  .storeHead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .storeHead b{ font-size:15px; color:var(--gold); letter-spacing:.5px; }
+  #storeClose{ width:30px; height:30px; border:none; border-radius:8px; background:#3a3142; color:#cbbfe0;
+    font-size:15px; font-weight:800; cursor:pointer; line-height:1; }
+  #storeClose:active{ transform:translateY(1px); }
+  .storeHint{ font-size:11.5px; color:var(--ink-dim); margin:0 0 10px; line-height:1.45; }
+  .storeHint b{ color:var(--ink); }
+  #storeGrid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:12px; }   /* same as the field */
+  #storeBuy{ width:100%; }
+  #storeBuy:disabled{ filter:grayscale(.5) brightness(.8); cursor:not-allowed; }
   /* a pick charged by an electric neighbour — sparks, glows, hits harder */
   .digger.electric .punit img{ filter:drop-shadow(0 0 4px #5ad0ff) drop-shadow(0 0 8px #ffe83a); }
   .digger.electric::before{
@@ -695,7 +732,7 @@
 
   /* ---------- coin rain from the chest ---------- */
   .coinRain{
-    position:absolute; width:20px; height:20px; image-rendering:pixelated; z-index:18;
+    position:absolute; width:20px; height:20px; image-rendering:pixelated; z-index:3;   /* behind the chest */
     pointer-events:none;
     animation-name:coinFountain; animation-timing-function:cubic-bezier(.2,.7,.5,1); animation-fill-mode:forwards;
   }
@@ -859,7 +896,7 @@
     background:linear-gradient(180deg,#ffffff,#e6ebf4); color:#2b3346;
     box-shadow:inset 0 0 0 2px #ffffff, inset 0 1px 0 #ffffff, 0 3px 0 #b8c0d0, 0 4px 7px #00000018;
   }
-  body.light #settingsBtn{
+  body.light #chestBtn{
     background:linear-gradient(180deg,#ffffff,#e2e7f2); color:#2b3346;
     box-shadow:inset 0 0 0 2px #ffffff, 0 2px 0 #b8c0d0, 0 3px 6px #00000018;
   }
@@ -883,7 +920,7 @@
       <button class="iconBtn" id="passBtn"><span class="ic">🏆</span><span class="lb">Пропуск</span></button>
       <button class="iconBtn" id="promoBtn"><span class="ic">🎁</span><span class="lb">Промокоды</span></button>
       <span id="eventTopMsg"></span>
-      <button id="settingsBtn" aria-label="Настройки">⚙</button>
+      <button id="chestBtn" aria-label="Сундук" title="Сундук — хранилище кирок">📦</button>
     </div>
     <div id="title">MIX BRICKS</div>
     <div id="statRow">
@@ -921,6 +958,17 @@
     <div id="digHint">купи кирки, объедини их и нажми «Запустить»</div>
   </div>
 
+</div>
+
+<button id="settingsBtn" aria-label="Настройки" title="Настройки">⚙</button>
+
+<!-- chest storage: dims the game, the merge field stays tappable -->
+<div id="storeBackdrop"></div>
+<div id="storeDrawer">
+  <div class="storeHead"><b>СУНДУК · хранилище кирок</b><button id="storeClose" aria-label="Закрыть">✕</button></div>
+  <p class="storeHint">Перетаскивай кирки между <b>полем</b> и <b>сундуком</b> — в любую ячейку. Одинаковые кирки объединяются.</p>
+  <div id="storeGrid"></div>
+  <button class="btn buy" id="storeBuy">КУПИТЬ ЯЧЕЙКУ · 500</button>
 </div>
 
 <div id="toast"></div>
@@ -1011,7 +1059,7 @@
   <div class="setRow"><span class="setLbl">Тема</span><button id="setTheme" class="setToggle">Тёмная</button></div>
   <div class="setRow"><span class="setLbl">Звук</span><button id="setSound" class="setToggle on">Вкл</button></div>
   <div class="setRow"><span class="setLbl">Обучение</span><button id="setTutorial" class="setToggle">Туториал</button></div>
-  <div class="setAbout"><b>V0.2.9</b><br>© Mix Bricks</div>
+  <div class="setAbout"><b>V0.3.0</b><br>© Mix Bricks</div>
   <button class="btn go modalDone" data-close="settingsModal">ЗАКРЫТЬ</button>
 </div></div>
 
@@ -1083,7 +1131,7 @@ function makeBlockTex(def){
 const CRACK_SEGS = [
   [[8,0,7,5],[7,5,10,8],[10,8,8,13],[8,13,9,16],[7,5,3,7],[10,8,14,9]],     // 0: forking vein
   [[8,8,3,2],[8,8,14,3],[8,8,2,12],[8,8,13,14],[8,8,8,0],[8,8,8,16]],       // 1: star burst from centre
-  [[2,2,8,8],[8,8,14,14],[14,2,8,8],[8,8,2,14],[8,1,8,8],[8,8,8,15]],       // 2: X / Ж — crossed diagonals + vertical
+  [[8,16,7,11],[7,11,10,8],[10,8,8,3],[8,3,9,0],[7,11,3,9],[10,8,14,7]],    // 2: the classic vein, flipped upside-down
 ];
 function makeCrack(v){
   const S=16, scale=4; const {c,x}=cv(S*scale);
@@ -1379,6 +1427,9 @@ const MAX_LEVEL = 13;        // highest pick level (12 = electric, 13 = explosiv
 const MAX_GAME_LEVEL = 20;   // the game has 20 dig levels in total
 const MAX_USES = 3;          // a pick can be launched 3 times before it's used up
 const MAGIC_LEVEL = 14;      // sentinel "level" for the event-only magic acid pick
+const STORE_START = 5;       // chest starts with 5 storage slots
+const STORE_MAX = 15;        // …expandable to 15
+const STORE_COST = 500;      // 500 coins per extra slot
 // ---- SUPER EVENT: the evil mage (a separate blue-coin game mode) ----
 const EVENT_END     = '20.06.2026';            // event closes after this date
 const EVENT_END_TS  = new Date(2026,5,21).getTime();  // 21 Jun 2026 00:00 (month 0-based)
@@ -1387,6 +1438,7 @@ const MAGE_WEAR     = 4;                         // picks tire as they hammer �
 const EVENT_COIN_RATE = 1.2;                    // blue coins earned per point of damage dealt
 const EVENT_COOLDOWN_MS = 13*60*60*1000;        // beat the mage once per 13h
 const EVENT_CD_VERSION = 1;                     // bump to one-time-reset every player's cooldown
+const TUT_BROADCAST = 1;                        // bump to show the tutorial once to every player
 const EVENT_REWARD = {coins:1000, picks:[12,13]};   // chest prize → carried to the normal game
 // purchases needed WITHIN each tier to reach the next pick level:
 // L1→2:50, 2→3:150, 3→4:250, 4→5:350, 5→6:600, then steeper
@@ -1417,6 +1469,9 @@ const game = {
   pending:[],        // reward picks waiting for free space on the normal field (levels)
   gotMagic:false,    // the one-time magic pick (first mage win) already given?
   tutorialDone:false,// has the player seen the first-time tutorial?
+  tutSeenV:0,        // tutorial-broadcast version the player has been shown
+  storeSlots:STORE_START,                       // chest storage capacity (5..15)
+  store:new Array(STORE_START).fill(null),      // stored picks (cells | null)
 };
 
 function pickPower(lv){ return lv; }
@@ -1447,14 +1502,17 @@ const CHANGELOG = [
   {date:'14.06.2026', title:'🧙 Супер ивент: злой маг',
    text:'Новый режим! Жми на крутящуюся кнопку справа внизу и сразись со злым магом. Это отдельная игра: своя голубая валюта, всё с нуля, а вместо блоков — огромный маг. У каждой кирки тут только 3 запуска (видно на ячейке: 3/3 → 1/3), зато за урон по магу капают монеты — прокачивай кирки и бей дальше. Маг очень живучий! Одолеешь — он взрывается конфетти, а в награду 1000 монет и кирки 12 + 13 уровня в основную игру. Мага можно одолеть раз в 13 часов, ивент идёт до 20.06.2026. А ещё в обычной игре теперь 20 уровней — боссы-зомби ждут на 5, 10, 15 и 20!'},
   {date:'15.06.2026', title:'Gameplay Snapshot',
-   text:'Мы собрали много информации и идей, чтобы вам было интереснее играть, и готовы показать первую версию. Теперь на боссе 20 уровня есть мини-игра, и в ивенте тоже — попади по зелёной зоне круга и нанеси боссу мощный удар (так легче). Добавили обучалку: она откроется, если вы зашли впервые, или вручную — Настройки → Туториал. Ещё больше визуальных эффектов: блоки ломаются по-разному, у событий свои эффекты. И добавили ивентовую «магическую кирку» (Limited) — она окисляет соседние блоки зелёной кислотой, и они копаются быстрее. Получить её можно только за победу над магом.'},
+   text:'Мы собрали много информации и идей, чтобы вам было интереснее играть, и готовы показать первую версию. Теперь на боссе 20 уровня есть мини-игра, и в ивенте тоже — попади по зелёной зоне круга и нанеси боссу мощный удар (так легче). Добавили обучалку: она откроется, если вы зашли впервые, или вручную — Настройки → Туториал. Ещё больше визуальных эффектов: блоки ломаются по-разному, у событий свои эффекты. И добавили ивентовую «магическую кирку» (Limited) — она окисляет соседние блоки зелёной кислотой, и они копаются быстрее. Получить её можно только за победу над магом. Промокод к версии 0.3.0 — «Update03» (200 монет и кирка 8 уровня).'},
+  {date:'15.06.2026', title:'📦 V0.3.0 — Сундук для кирок',
+   text:'Теперь у вас есть сундук — личное хранилище кирок! Жми 📦 в верхней панели, и прямо поверх игры откроется сундук. Складывай туда лишние кирки, чтобы они не занимали место на поле, и доставай обратно, когда понадобятся. Перетаскивай кирки пальцем между полем и сундуком в любую ячейку — а если положить кирку на такую же, они объединятся в следующий уровень прямо в сундуке. Хранить можно даже магическую кирку (Limited) до следующего раза. Сначала 5 ячеек, но их можно докупить за монеты — по 500 за штуку, всего до 15. Заодно: настройки переехали на отдельную кнопку ⚙ слева внизу, монетки теперь красиво высыпаются из-за сундука, и мы поправили узор трещин на блоках.'},
 ];
-// the newest changelog date — bump to re-show the "update available" note
-const LATEST_UPDATE = '15.06.2026';
+// the newest update token — bump to re-show the "update available" note for returning players
+const LATEST_UPDATE = '0.3.0-chest';
 // promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
-  'bug22':   {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
-  'zombie2': {coins:50,  pick:6, label:'кирка 6 уровня и 50 монет'},
+  'bug22':    {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
+  'zombie2':  {coins:50,  pick:6, label:'кирка 6 уровня и 50 монет'},
+  'update03': {coins:200, pick:8, label:'200 монет и кирка 8 уровня'},
 };
 // quests — простые понятные цели; награда — XP для пропуска.
 // total ≈ 1200 XP, выше максимума пропуска (1000), так что он открывается весь.
@@ -1521,6 +1579,9 @@ function save(){
       pending:game.pending,
       gotMagic:game.gotMagic,
       tutorialDone:game.tutorialDone,
+      tutSeenV:game.tutSeenV,
+      storeSlots:game.storeSlots,
+      store:game.store,
     }));
   }catch(e){ /* storage unavailable — ignore */ }
 }
@@ -1550,6 +1611,13 @@ function load(){
     game.pending = Array.isArray(s.pending) ? s.pending.filter(x=>Number.isFinite(x)) : [];
     game.gotMagic = !!s.gotMagic;
     game.tutorialDone = !!s.tutorialDone;
+    game.tutSeenV = Number.isFinite(s.tutSeenV) ? s.tutSeenV : 0;
+    game.storeSlots = Number.isFinite(s.storeSlots) ? clamp(s.storeSlots, STORE_START, STORE_MAX) : STORE_START;
+    game.store = (Array.isArray(s.store))
+      ? s.store.map(c => (c && Number.isFinite(c.level)) ? {level:c.level, uses:(Number.isFinite(c.uses)?clamp(c.uses,0,MAX_USES):MAX_USES)} : null)
+      : new Array(game.storeSlots).fill(null);
+    while(game.store.length < game.storeSlots) game.store.push(null);
+    game.store.length = game.storeSlots;
     game.mode = 'normal';                       // always resume in the normal game
     if(s.event && typeof s.event==='object'){
       const e=s.event;
@@ -1637,7 +1705,7 @@ function makePickEl(level, uses){
 function renderSlot(i){
   const s=slotEls[i]; s.innerHTML=''; s.classList.remove('mergeable','hoverdrop');
   const cell=game.grid[i];
-  if(cell){ const el=makePickEl(cell.level, cell.uses); el.dataset.idx=i; s.appendChild(el); }
+  if(cell){ const el=makePickEl(cell.level, cell.uses); el.dataset.idx=i; el.dataset.where='grid'; s.appendChild(el); }
 }
 function addPickToGrid(level, animate=true, uses=MAX_USES){
   const free=freeSlots();
@@ -1668,6 +1736,34 @@ function onPendingClick(){
   renderPending(); refreshUI();      // shrinks back to normal once the queue empties
 }
 
+/* ---- chest storage ---- */
+let storeOpen=false;
+function openStore(){
+  if(game.running || game.mode==='event') return;
+  document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));
+  storeOpen=true; document.body.classList.add('storeopen'); renderStore();
+}
+function closeStore(){ storeOpen=false; document.body.classList.remove('storeopen'); }
+let storeSlotEls=[];
+function renderStore(){
+  const box=$('#storeGrid'); if(!box) return; box.innerHTML=''; storeSlotEls=[];
+  for(let i=0;i<game.storeSlots;i++){
+    const s=document.createElement('div'); s.className='slot storeSlot'; s.dataset.idx=i; s.dataset.where='store';
+    const cell=game.store[i];
+    if(cell){ const el=makePickEl(cell.level, cell.uses); el.dataset.idx=i; el.dataset.where='store'; s.appendChild(el); }
+    box.appendChild(s); storeSlotEls.push(s);
+  }
+  const buy=$('#storeBuy');
+  if(game.storeSlots>=STORE_MAX){ buy.style.display='none'; }
+  else { buy.style.display=''; buy.textContent=`КУПИТЬ ЯЧЕЙКУ · ${STORE_COST}  (${game.storeSlots}/${STORE_MAX})`; buy.disabled=game.coins<STORE_COST; }
+}
+function buyStoreSlot(){
+  if(game.storeSlots>=STORE_MAX){ toast('Уже максимум ячеек'); return; }
+  if(game.coins<STORE_COST){ toast('Недостаточно монет'); return; }
+  game.coins-=STORE_COST; game.storeSlots++; game.store.push(null);
+  sfxBuy(); renderStore(); refreshUI();
+}
+
 /* ---- buy ---- */
 function buyPick(){
   if(game.running) return;
@@ -1686,17 +1782,22 @@ function buyPick(){
 
 /* ---- drag & merge (pointer based, mouse + touch) ---- */
 let drag=null;
+// a pick lives in the field ('grid') or the chest ('store'); these resolve either
+function locArr(w){ return w==='store' ? game.store : game.grid; }
+function locSlotEl(w,i){ return w==='store' ? storeSlotEls[i] : slotEls[i]; }
+function locRender(w,i){ if(w==='store') renderStore(); else renderSlot(i); }
 function onPickDown(e){
   if(game.running) return;
-  const el=e.currentTarget; const from=+el.dataset.idx;
-  if(game.grid[from]==null) return;
+  const el=e.currentTarget; const where=el.dataset.where||'grid'; const from=+el.dataset.idx;
+  if(locArr(where)[from]==null) return;
   e.preventDefault();
   audioInit();
-  const slot=slotEls[from]; const r=slot.getBoundingClientRect();
-  drag={el,from,w:r.width,h:r.height,offX:r.width/2,offY:r.height/2,lastSlot:null};
+  const slot=locSlotEl(where,from); const r=slot.getBoundingClientRect();
+  drag={el,where,from,w:r.width,h:r.height,offX:r.width/2,offY:r.height/2,lastSlot:null};
   el.classList.add('dragging');
   el.style.position='fixed'; el.style.width=r.width+'px'; el.style.height=r.height+'px';
   el.style.margin='0';
+  document.body.appendChild(el);   // detach from any transformed ancestor (chest drawer) so fixed-pos tracks the viewport, not the drawer
   moveDragTo(e.clientX,e.clientY);
   window.addEventListener('pointermove',onPickMove);
   window.addEventListener('pointerup',onPickUp,{once:true});
@@ -1709,7 +1810,7 @@ function slotUnder(x,y){
   drag.el.style.visibility='hidden';
   const t=document.elementFromPoint(x,y);
   drag.el.style.visibility='';
-  return t? t.closest('.slot') : null;
+  return t? t.closest('.slot,.storeSlot') : null;
 }
 function onPickMove(e){
   if(!drag) return;
@@ -1718,12 +1819,12 @@ function onPickMove(e){
   if(drag.lastSlot && drag.lastSlot!==s) drag.lastSlot.classList.remove('hoverdrop','mergeable');
   drag.lastSlot=s;
   if(!s) return;
-  const ti=+s.dataset.idx;
-  if(ti===drag.from){ s.classList.remove('hoverdrop','mergeable'); return; }
-  const target=game.grid[ti];
-  if(target && target.level===game.grid[drag.from].level && target.level<MAX_LEVEL){
+  const tw=s.dataset.where||'grid', ti=+s.dataset.idx;
+  if(tw===drag.where && ti===drag.from){ s.classList.remove('hoverdrop','mergeable'); return; }
+  const a=locArr(drag.where)[drag.from], b=locArr(tw)[ti];
+  if(b && a && b.level===a.level && b.level<MAX_LEVEL){
     s.classList.add('mergeable'); s.classList.remove('hoverdrop');
-  } else if(!target){
+  } else if(!b){
     s.classList.add('hoverdrop'); s.classList.remove('mergeable');
   } else { s.classList.remove('hoverdrop','mergeable'); }
 }
@@ -1732,53 +1833,48 @@ function onPickUp(e){
   if(!drag) return;
   const x=e.clientX, y=e.clientY;
   const s=slotUnder(x,y);
-  const from=drag.from;
-  // reset the dragged element's inline drag styling
-  const stale=drag.el;
-  stale.style.position=''; stale.style.left=''; stale.style.top='';
-  stale.style.width=''; stale.style.height=''; stale.style.margin='';
-  stale.classList.remove('dragging');
+  const fromWhere=drag.where, from=drag.from;
+  // the dragged element is a floating clone re-parented to <body>; discard it (slots are rebuilt via locRender below)
+  drag.el.remove();
   if(drag.lastSlot) drag.lastSlot.classList.remove('hoverdrop','mergeable');
-  // dropped clearly outside the merge field → throw it away (3s timer, then delete)
-  const pr=$('#mergePanel').getBoundingClientRect();
-  const outside = x<pr.left||x>pr.right||y<pr.top||y>pr.bottom;
-  if(!s && outside){
-    // don't let the player throw away their VERY LAST pick if they can't
-    // afford a replacement — that would soft-lock the game
-    const remaining=game.grid.filter(Boolean).length;   // still includes this pick
-    if(remaining<=1 && game.coins<buyPrice()){
-      renderSlot(from);                                  // snap it back into place
-      drag=null;
-      toast('Нельзя выбросить последнюю кирку — не хватит монет на новую');
-      refreshUI();
-      return;
-    }
-    drag=null; trashPick(from,x,y); return;
-  }
-  let handled=false;
-  if(s){
-    const ti=+s.dataset.idx;
-    s.classList.remove('hoverdrop','mergeable');
-    if(ti!==from){
-      const a=game.grid[from], b=game.grid[ti];
-      if(b && a.level===b.level && b.level<MAX_LEVEL){       // MERGE
-        game.grid[ti]={level:b.level+1, uses:MAX_USES}; game.grid[from]=null;   // merged = fresh pick
-        game.stats.merges++;                                  // for quests
-        notePick(b.level+1);                                  // track highest pick reached
-        renderSlot(from); renderSlot(ti);
-        const np=$('.pick',slotEls[ti]); if(np){ np.classList.add('merging'); setTimeout(()=>np.classList.remove('merging'),300); }
-        sfxMerge();
-        handled=true;
-        if(b.level+1===MAX_LEVEL) toast('Максимальный уровень кирки!');
-      } else if(b && a.level===b.level && b.level>=MAX_LEVEL){
-        toast('Уже максимальный уровень');
-      } else if(!b){                                         // MOVE
-        game.grid[ti]=a; game.grid[from]=null;
-        renderSlot(from); renderSlot(ti); handled=true;
+  if(!s){
+    // no slot under the drop: maybe throw a FIELD pick away (chest picks just snap back)
+    const pr=$('#mergePanel').getBoundingClientRect();
+    let overDrawer=false;
+    if(storeOpen){ const dr=$('#storeDrawer').getBoundingClientRect(); overDrawer = x>=dr.left&&x<=dr.right&&y>=dr.top&&y<=dr.bottom; }
+    const outside = x<pr.left||x>pr.right||y<pr.top||y>pr.bottom;
+    if(fromWhere==='grid' && outside && !overDrawer){
+      const remaining=game.grid.filter(Boolean).length;   // still includes this pick
+      if(remaining<=1 && game.coins<buyPrice()){
+        renderSlot(from); drag=null;
+        toast('Нельзя выбросить последнюю кирку — не хватит монет на новую'); refreshUI(); return;
       }
+      drag=null; trashPick(from,x,y); return;
+    }
+    locRender(fromWhere,from); drag=null; refreshUI(); return;   // snap back
+  }
+  const tw=s.dataset.where||'grid', ti=+s.dataset.idx;
+  s.classList.remove('hoverdrop','mergeable');
+  let handled=false;
+  if(!(tw===fromWhere && ti===from)){
+    const aArr=locArr(fromWhere), bArr=locArr(tw);
+    const a=aArr[from], b=bArr[ti];
+    if(b && a.level===b.level && b.level<MAX_LEVEL){           // MERGE
+      bArr[ti]={level:b.level+1, uses:MAX_USES}; aArr[from]=null;
+      game.stats.merges++; notePick(b.level+1);
+      locRender(fromWhere,from); locRender(tw,ti);
+      const ts=locSlotEl(tw,ti), np=ts&&ts.querySelector('.pick');
+      if(np){ np.classList.add('merging'); setTimeout(()=>np.classList.remove('merging'),300); }
+      sfxMerge(); handled=true;
+      if(b.level+1===MAX_LEVEL) toast('Максимальный уровень кирки!');
+    } else if(b && a.level===b.level && b.level>=MAX_LEVEL){
+      toast('Уже максимальный уровень');
+    } else if(!b){                                            // MOVE (incl. field ↔ chest)
+      bArr[ti]=a; aArr[from]=null;
+      locRender(fromWhere,from); locRender(tw,ti); handled=true;
     }
   }
-  if(!handled) renderSlot(from);
+  if(!handled) locRender(fromWhere,from);
   drag=null;
   refreshUI();
 }
@@ -1862,6 +1958,7 @@ function blockEl(key,h,bossFloor){
     d.style.background='linear-gradient(#2a2c34,#16171c)';
     d.style.boxShadow='inset 0 6px 12px #00000088';
   } else if(key==='gift'){
+    d.style.position='relative'; d.style.zIndex='5';        // sit in FRONT of the coin fountain
     d.style.background='linear-gradient(#2a2046,#1a1330)';
     const g=document.createElement('img'); g.src=TEX.gift;
     g.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66%;image-rendering:pixelated;filter:drop-shadow(0 3px 0 #0008);';
@@ -2105,7 +2202,7 @@ function coinRain(laneEl,giftRow){
     const up=-dig.blockH*(1.4+Math.random()*1.9);       // shoot UP out of the chest
     const rot=(Math.random()*2-1)*260;
     const dur=0.9+Math.random()*0.6, delay=Math.random()*0.5;
-    c.style.cssText=`left:${32+Math.random()*36}%; top:${top+dig.blockH*0.35}px; --dx:${dx}px; --up:${up}px; --rot:${rot}deg; animation-duration:${dur}s; animation-delay:${delay}s;`;
+    c.style.cssText=`left:${36+Math.random()*28}%; top:${top+dig.blockH*0.58}px; --dx:${dx}px; --up:${up}px; --rot:${rot}deg; animation-duration:${dur}s; animation-delay:${delay}s;`;
     laneEl.appendChild(c);
     setTimeout(()=>c.remove(),(dur+delay)*1000+200);
   }
@@ -2941,6 +3038,12 @@ function boot(){
   $('#passBtn').addEventListener('click',()=>{ renderPass(); openModal('passModal'); });
   $('#promoBtn').addEventListener('click',()=>{ promoMsg('',true); openModal('promoModal'); });
 
+  // ---- chest storage ----
+  $('#chestBtn').addEventListener('click',openStore);
+  $('#storeClose').addEventListener('click',closeStore);
+  $('#storeBackdrop').addEventListener('click',closeStore);
+  $('#storeBuy').addEventListener('click',buyStoreSlot);
+
   // ---- settings ----
   $('#settingsBtn').addEventListener('click',()=>{ renderSettings(); openModal('settingsModal'); });
   $('#setTheme').addEventListener('click',toggleTheme);
@@ -2975,11 +3078,13 @@ function boot(){
   renderPending();               // show any reward picks waiting for free space
   refreshUI();
   setInterval(updateTimers, 1000);   // live cooldown timers (event button + win banner)
-  if(!hadSave && !game.tutorialDone){           // brand-new player → teach the basics
-    game.seenUpdate = LATEST_UPDATE;            // (skip the "update available" note for them)
+  if(game.tutSeenV < TUT_BROADCAST){            // show the tutorial once to EVERY player (new + existing)
+    game.tutSeenV = TUT_BROADCAST;
+    game.seenUpdate = LATEST_UPDATE;            // don't double-pop the update note over the tutorial
+    save();
     setTimeout(startTutorial, 450);
   } else {
-    maybeShowUpdateNote();                       // returning player → one-time "update available" note
+    maybeShowUpdateNote();                       // afterwards: normal one-time "update available" note
   }
 }
 
