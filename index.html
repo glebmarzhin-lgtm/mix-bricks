@@ -609,6 +609,21 @@
   .noteBox .modalIcon{filter:drop-shadow(0 0 7px #b89aff);}
   .noteBox .modalSub{color:#c8bce6;}
 
+  /* === new-game cross-promo (bright, playful) === */
+  .modalBox.gameBox{
+    background:linear-gradient(180deg,#26324a,#1a2030);
+    box-shadow:inset 0 0 0 3px #3d5a86, 0 8px 0 #05030a;
+  }
+  .gameBox h2{ color:#ff8a6b; font-size:23px; letter-spacing:1px;
+    text-shadow:0 2px 0 #9a3a22,0 4px 0 #481810; }
+  .gameBox .modalSub{ color:#d2def0; font-size:13px; }
+  .gamePromoImg{
+    display:block; width:72%; max-width:208px; height:auto; margin:6px auto 14px;
+    border-radius:14px; border:2px solid #3d5a86;
+    box-shadow:inset 0 0 0 2px #0d1626, 0 4px 0 #05030a;
+  }
+  .gameBox a.btn{ display:flex; align-items:center; justify-content:center; text-decoration:none; }
+
   /* promo input (full width) + stacked action buttons */
   #promoInput{
     display:block; width:100%; padding:12px; margin-bottom:2px;
@@ -1033,6 +1048,17 @@
   </div>
 </div></div>
 
+<!-- cross-promo: brand-new game "ball-point" (one-time, every player) -->
+<div class="modal" id="gamePromo"><div class="modalBox gameBox">
+  <button class="modalX" data-close="gamePromo" aria-label="Закрыть">✕</button>
+  <img class="gamePromoImg" src="game.jpg" alt="Новая игра">
+  <div class="modalHead"><h2>НОВАЯ ИГРА?!?!</h2></div>
+  <p class="modalSub">Попробуйте первую версию новой игры от «Mix Bricks»!</p>
+  <div class="modalBtns">
+    <a class="btn go" id="gamePromoPlay" href="https://glebmarzhin-lgtm.github.io/ball-point/" target="_blank" rel="noopener">ИГРАТЬ</a>
+  </div>
+</div></div>
+
 <!-- quests (green objectives theme) -->
 <div class="modal" id="questsModal"><div class="modalBox questsBox">
   <button class="modalX" data-close="questsModal" aria-label="Закрыть">✕</button>
@@ -1439,6 +1465,7 @@ const EVENT_COIN_RATE = 1.2;                    // blue coins earned per point o
 const EVENT_COOLDOWN_MS = 13*60*60*1000;        // beat the mage once per 13h
 const EVENT_CD_VERSION = 1;                     // bump to one-time-reset every player's cooldown
 const TUT_BROADCAST = 1;                        // bump to show the tutorial once to every player
+const GAME_PROMO_VER = 1;                       // bump to re-show the "new game" cross-promo to every player
 const EVENT_REWARD = {coins:1000, picks:[12,13]};   // chest prize → carried to the normal game
 // purchases needed WITHIN each tier to reach the next pick level:
 // L1→2:50, 2→3:150, 3→4:250, 4→5:350, 5→6:600, then steeper
@@ -1470,6 +1497,7 @@ const game = {
   gotMagic:false,    // the one-time magic pick (first mage win) already given?
   tutorialDone:false,// has the player seen the first-time tutorial?
   tutSeenV:0,        // tutorial-broadcast version the player has been shown
+  seenGamePromo:0,   // "new game" cross-promo version the player has been shown
   storeSlots:STORE_START,                       // chest storage capacity (5..15)
   store:new Array(STORE_START).fill(null),      // stored picks (cells | null)
 };
@@ -1580,6 +1608,7 @@ function save(){
       gotMagic:game.gotMagic,
       tutorialDone:game.tutorialDone,
       tutSeenV:game.tutSeenV,
+      seenGamePromo:game.seenGamePromo,
       storeSlots:game.storeSlots,
       store:game.store,
     }));
@@ -1612,6 +1641,7 @@ function load(){
     game.gotMagic = !!s.gotMagic;
     game.tutorialDone = !!s.tutorialDone;
     game.tutSeenV = Number.isFinite(s.tutSeenV) ? s.tutSeenV : 0;
+    game.seenGamePromo = Number.isFinite(s.seenGamePromo) ? s.seenGamePromo : 0;
     game.storeSlots = Number.isFinite(s.storeSlots) ? clamp(s.storeSlots, STORE_START, STORE_MAX) : STORE_START;
     game.store = (Array.isArray(s.store))
       ? s.store.map(c => (c && Number.isFinite(c.level)) ? {level:c.level, uses:(Number.isFinite(c.uses)?clamp(c.uses,0,MAX_USES):MAX_USES)} : null)
@@ -3060,6 +3090,9 @@ function boot(){
   // ---- update note ----
   $('#noteOpen').addEventListener('click',()=>{ dismissUpdateNote(); openModal('updatesModal'); });
 
+  // ---- new-game cross-promo ---- (opens ball-point in a new tab, then closes the note)
+  $('#gamePromoPlay').addEventListener('click',()=>closeModal('gamePromo'));
+
   // ---- generic modal close (buttons + backdrop) ----
   $$('[data-close]').forEach(b=>b.addEventListener('click',()=>{
     const id=b.dataset.close;
@@ -3083,6 +3116,10 @@ function boot(){
     game.seenUpdate = LATEST_UPDATE;            // don't double-pop the update note over the tutorial
     save();
     setTimeout(startTutorial, 450);
+  } else if(game.seenGamePromo < GAME_PROMO_VER){  // one-time "new game" cross-promo for every player
+    game.seenGamePromo = GAME_PROMO_VER;
+    save();
+    setTimeout(()=>openModal('gamePromo'), 350);
   } else {
     maybeShowUpdateNote();                       // afterwards: normal one-time "update available" note
   }
