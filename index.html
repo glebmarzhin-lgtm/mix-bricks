@@ -668,6 +668,15 @@
   .blk.acided{ box-shadow:inset 0 0 12px 3px rgba(62,216,96,.55); }
   .blk.acided::after{ content:""; position:absolute; inset:0; background:linear-gradient(rgba(62,216,96,.28),rgba(62,216,96,.05)); pointer-events:none; animation:acidPulse .5s ease-in-out infinite; }
   @keyframes acidPulse{ 0%,100%{opacity:.5;} 50%{opacity:.9;} }
+  /* season-2 frost pick: icy-blue glow / tag, and adjacent blocks freeze then shatter */
+  .glowAura.frost{
+    background:radial-gradient(circle, rgba(124,208,255,.7) 0%, rgba(190,235,255,.25) 45%, rgba(40,110,170,0) 72%);
+    animation:auraPulse .8s ease-in-out infinite;
+  }
+  .pick.frost img, .punit.frost img{ position:relative; z-index:1; filter:drop-shadow(0 0 5px #7cd0ff) drop-shadow(0 2px 2px #000a); }
+  .pick.frost .limited{ background:linear-gradient(#dff2ff,#7cd0ff); border-color:#1c4a74; color:#06233a; }
+  .blk.frosted{ box-shadow:inset 0 0 12px 3px rgba(124,208,255,.6); }
+  .blk.frosted::after{ content:""; position:absolute; inset:0; background:linear-gradient(rgba(190,235,255,.34),rgba(124,208,255,.08)); pointer-events:none; animation:acidPulse .5s ease-in-out infinite; }
   /* boss timing mini-game */
   #miniGame{ position:absolute; left:50%; top:13%; transform:translateX(-50%) scale(.5); z-index:70;
     opacity:0; transition:opacity .25s ease, transform .28s cubic-bezier(.2,1.7,.4,1); pointer-events:none;
@@ -995,6 +1004,7 @@
   <span class="evtTag">ИВЕНТ</span>
 </button>
 <audio id="eventMusic" src="event.mp3" loop preload="auto"></audio>
+<audio id="lobbyMusic" src="lobby.mp3" loop preload="auto"></audio>
 
 <!-- super event intro (purple arcane theme) -->
 <div class="modal" id="eventModal"><div class="modalBox eventBox">
@@ -1174,9 +1184,9 @@ function makeCrack(v){
    ========================================================= */
 let actx=null;
 function audioInit(){
-  if(actx){ if(actx.state==='suspended') actx.resume(); return; }
-  try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }
-  catch(e){ actx=null; }
+  if(actx){ if(actx.state==='suspended') actx.resume(); }
+  else { try{ actx=new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ actx=null; } }
+  playLobbyMusic();     // kick off quiet lobby music on the first user gesture (normal mode only)
 }
 function tone(freq,dur,type='square',vol=0.2,slideTo=null,delay=0){
   if(!actx || !game.soundOn) return;
@@ -1286,7 +1296,8 @@ const METAL = {
  11:['#ffffff','#c8e8ff','#7090b8'],   // diamond
  12:['#ffffff','#35d6ff','#0e72ad'],   // electric (charges a neighbour pick)
  13:['#ffd27a','#ff6a18','#8a2a06'],   // molten (explosive top tier)
- 14:['#c8ffd6','#3ed860','#13742f'],   // magic (acid green — event-only "Limited" pick)
+ 14:['#c8ffd6','#3ed860','#13742f'],   // magic (acid green — season-1 "Limited" pick)
+ 15:['#e8f7ff','#7cd0ff','#245e93'],   // frost (icy blue — season-2 "Limited" pick)
 };
 // blend a hex colour toward white for a highlight tone
 function lighten(hex, amt=0.5){
@@ -1436,7 +1447,8 @@ function makeMage(){
 const TEX = { picks:{}, blocks:{}, gift:'', coin:'', coinBlue:'', crack:[], zombie:'', mage:'' };
 function buildTextures(){
   for(let lv=1;lv<=MAX_LEVEL;lv++) TEX.picks[lv]=makePick(lv);
-  TEX.picks[MAGIC_LEVEL]=makePick(MAGIC_LEVEL);            // the event "magic" pick (acid green)
+  TEX.picks[MAGIC_LEVEL]=makePick(MAGIC_LEVEL);            // the season-1 "magic" pick (acid green)
+  TEX.picks[FROST_LEVEL]=makePick(FROST_LEVEL);            // the season-2 "frost" pick (icy blue)
   for(const k in BLOCKS) TEX.blocks[k]=makeBlockTex(BLOCKS[k]);
   TEX.gift=makeGift(); TEX.coin=makeCoin(COIN_GOLD); TEX.coinBlue=makeCoin(COIN_BLUE);
   TEX.crack=[makeCrack(0),makeCrack(1),makeCrack(2)];      // 3 break patterns
@@ -1452,18 +1464,23 @@ const BASE_PRICE = 5;
 const MAX_LEVEL = 13;        // highest pick level (12 = electric, 13 = explosive)
 const MAX_GAME_LEVEL = 20;   // the game has 20 dig levels in total
 const MAX_USES = 3;          // a pick can be launched 3 times before it's used up
-const MAGIC_LEVEL = 14;      // sentinel "level" for the event-only magic acid pick
+const MAGIC_LEVEL = 14;      // sentinel "level" for the season-1 acid "Limited" pick (kept for old saves)
+const FROST_LEVEL = 15;      // sentinel "level" for the season-2 frost "Limited" pick (new event)
 const STORE_START = 5;       // chest starts with 5 storage slots
 const STORE_MAX = 15;        // …expandable to 15
 const STORE_COST = 500;      // 500 coins per extra slot
 // ---- SUPER EVENT: the evil mage (a separate blue-coin game mode) ----
-const EVENT_END     = '20.06.2026';            // event closes after this date
-const EVENT_END_TS  = new Date(2026,5,21).getTime();  // 21 Jun 2026 00:00 (month 0-based)
+// renewed season-2 window: opens 18.07.2026 (in 3 days), runs 10 days → closes 28.07.2026
+const EVENT_START   = '18.07.2026';            // event opens on this date, for everyone
+const EVENT_START_TS= new Date(2026,6,18).getTime();  // 18 Jul 2026 00:00 (month 0-based)
+const EVENT_END     = '28.07.2026';            // …and closes after this date (10-day window)
+const EVENT_END_TS  = new Date(2026,6,28).getTime();  // 28 Jul 2026 00:00
 const MAGE_HP       = 17500;                    // big — beaten across many launches (tunable)
 const MAGE_WEAR     = 4;                         // picks tire as they hammer — the bar drains, then they retreat
 const EVENT_COIN_RATE = 1.2;                    // blue coins earned per point of damage dealt
 const EVENT_COOLDOWN_MS = 13*60*60*1000;        // beat the mage once per 13h
-const EVENT_CD_VERSION = 1;                     // bump to one-time-reset every player's cooldown
+const EVENT_CD_VERSION = 2;                     // bump to one-time-reset every player's cooldown (season-2 event renewal)
+const SEASON_VERSION = 1;                       // bump to one-time-reset every player's pass + quest progress (new season)
 const TUT_BROADCAST = 1;                        // bump to show the tutorial once to every player
 const GAME_PROMO_VER = 1;                       // bump to re-show the "new game" cross-promo to every player
 const EVENT_REWARD = {coins:1000, picks:[12,13]};   // chest prize → carried to the normal game
@@ -1494,14 +1511,19 @@ const game = {
   event:{ coins:10, grid:new Array(SLOTS).fill(null), purchases:0, mageHp:MAGE_HP, lastWin:0 },
   eventCdV:EVENT_CD_VERSION,   // cooldown-reset version the player has applied
   pending:[],        // reward picks waiting for free space on the normal field (levels)
-  gotMagic:false,    // the one-time magic pick (first mage win) already given?
+  gotMagic:false,    // season-1 acid pick already granted?
+  gotFrost:false,    // season-2 frost pick already granted?
   tutorialDone:false,// has the player seen the first-time tutorial?
   tutSeenV:0,        // tutorial-broadcast version the player has been shown
   seenGamePromo:0,   // "new game" cross-promo version the player has been shown
+  seasonV:0,         // season-reset version the player has applied (pass + quests)
   storeSlots:STORE_START,                       // chest storage capacity (5..15)
   store:new Array(STORE_START).fill(null),      // stored picks (cells | null)
 };
 
+// event "Limited" picks: 14 = acid (season 1), 15 = frost (season 2). the value doubles as the CSS class + ability id.
+const LIMITED_KIND = { [MAGIC_LEVEL]:'magic', [FROST_LEVEL]:'frost' };
+function limitedKind(lv){ return LIMITED_KIND[lv] || ''; }
 function pickPower(lv){ return lv; }
 function pickMaxQ(lv){ return 50 + lv*36; }   // tougher picks → deep levels are beatable
 // level of the n-th purchase (1-based), using the cumulative tier thresholds
@@ -1533,30 +1555,32 @@ const CHANGELOG = [
    text:'Мы собрали много информации и идей, чтобы вам было интереснее играть, и готовы показать первую версию. Теперь на боссе 20 уровня есть мини-игра, и в ивенте тоже — попади по зелёной зоне круга и нанеси боссу мощный удар (так легче). Добавили обучалку: она откроется, если вы зашли впервые, или вручную — Настройки → Туториал. Ещё больше визуальных эффектов: блоки ломаются по-разному, у событий свои эффекты. И добавили ивентовую «магическую кирку» (Limited) — она окисляет соседние блоки зелёной кислотой, и они копаются быстрее. Получить её можно только за победу над магом. Промокод к версии 0.3.0 — «Update03» (200 монет и кирка 8 уровня).'},
   {date:'15.06.2026', title:'📦 V0.3.0 — Сундук для кирок',
    text:'Теперь у вас есть сундук — личное хранилище кирок! Жми 📦 в верхней панели, и прямо поверх игры откроется сундук. Складывай туда лишние кирки, чтобы они не занимали место на поле, и доставай обратно, когда понадобятся. Перетаскивай кирки пальцем между полем и сундуком в любую ячейку — а если положить кирку на такую же, они объединятся в следующий уровень прямо в сундуке. Хранить можно даже магическую кирку (Limited) до следующего раза. Сначала 5 ячеек, но их можно докупить за монеты — по 500 за штуку, всего до 15. Заодно: настройки переехали на отдельную кнопку ⚙ слева внизу, монетки теперь красиво высыпаются из-за сундука, и мы поправили узор трещин на блоках.'},
+  {date:'15.07.2026', title:'❄️ Новый сезон + морозный ивент',
+   text:'Стартовал новый сезон! Задания и Пропуск полностью обновлены — свежие цели и новые награды, а прогресс сброшен всем, так что пропуск открываем заново. Через 3 дня, 18.07, для всех вернётся супер-ивент со злым магом — и на этот раз в награду уникальная ❄️ морозная кирка (Limited): она замораживает соседние линии, и блоки рядом ломаются с одного удара (заметно сильнее старой кислотной!). Ивент продлится 10 дней, до 28.07. А ещё в лобби теперь играет тихая фоновая музыка — если мешает, выключи её в Настройках. Промокод к обновлению — «Season2» (250 монет и кирка 9 уровня).'},
 ];
 // the newest update token — bump to re-show the "update available" note for returning players
-const LATEST_UPDATE = '0.3.0-chest';
+const LATEST_UPDATE = '0.4.0-season';
 // promo codes — keys stored lower-case, matching is case-insensitive
 const PROMOS = {
   'bug22':    {coins:100, pick:5, label:'100 монет и кирка 5 уровня'},
   'zombie2':  {coins:50,  pick:6, label:'кирка 6 уровня и 50 монет'},
   'update03': {coins:200, pick:8, label:'200 монет и кирка 8 уровня'},
+  'season2':  {coins:250, pick:9, label:'250 монет и кирка 9 уровня'},
 };
-// quests — простые понятные цели; награда — XP для пропуска.
-// total ≈ 1200 XP, выше максимума пропуска (1000), так что он открывается весь.
+// quests (сезон 2) — простые понятные цели; награда — XP для пропуска.
+// total ≈ 1280 XP, выше максимума пропуска (1000), так что он открывается весь.
 const QUESTS = [
-  {id:'merge30',  title:'Скрестить 30 кирок',        stat:'merges',       target:30,   reward:70},
-  {id:'merge150', title:'Скрестить 150 кирок',       stat:'merges',       target:150,  reward:110},
-  {id:'buy80',    title:'Купить 80 кирок',           stat:'purchases',    target:80,   reward:70},
-  {id:'buy300',   title:'Купить 300 кирок',          stat:'purchases',    target:300,  reward:110},
-  {id:'dig800',   title:'Вскопать 800 блоков',       stat:'blocksDug',    target:800,  reward:70},
-  {id:'dig4000',  title:'Вскопать 4000 блоков',      stat:'blocksDug',    target:4000, reward:120},
-  {id:'lvl8',     title:'Получить кирку 8 уровня',    stat:'maxPickLevel', target:8,    reward:90},
-  {id:'lvl11',    title:'Получить кирку 11 уровня',   stat:'maxPickLevel', target:11,   reward:130},
-  {id:'win5',     title:'Пройти 5 уровней',          stat:'levelsWon',    target:5,    reward:90},
-  {id:'win10',    title:'Пройти все 10 уровней',     stat:'levelsWon',    target:10,   reward:140},
-  {id:'boss1',    title:'Одолеть босса‑зомби',       stat:'bossesBeaten', target:1,    reward:80},
-  {id:'mage1',    title:'Одолеть злого мага',        stat:'mageWins',     target:1,    reward:120},
+  {id:'s2_merge40',  title:'Скрестить 40 кирок',        stat:'merges',       target:40,   reward:70},
+  {id:'s2_merge220', title:'Скрестить 220 кирок',       stat:'merges',       target:220,  reward:130},
+  {id:'s2_dig1200',  title:'Вскопать 1200 блоков',      stat:'blocksDug',    target:1200, reward:80},
+  {id:'s2_dig6000',  title:'Вскопать 6000 блоков',      stat:'blocksDug',    target:6000, reward:140},
+  {id:'s2_lvl9',     title:'Получить кирку 9 уровня',    stat:'maxPickLevel', target:9,    reward:90},
+  {id:'s2_lvl12',    title:'Получить кирку 12 уровня',   stat:'maxPickLevel', target:12,   reward:150},
+  {id:'s2_win10',    title:'Пройти 10 уровней',          stat:'levelsWon',    target:10,   reward:90},
+  {id:'s2_win20',    title:'Дойти до 20 уровня',         stat:'levelsWon',    target:20,   reward:150},
+  {id:'s2_boss2',    title:'Одолеть 2 боссов‑зомби',     stat:'bossesBeaten', target:2,    reward:100},
+  {id:'s2_mage1',    title:'Одолеть злого мага',         stat:'mageWins',     target:1,    reward:110},
+  {id:'s2_mage3',    title:'Одолеть мага 3 раза',        stat:'mageWins',     target:3,    reward:170},
 ];
 function questStat(stat){ return stat==='purchases' ? game.purchases : (game.stats[stat]||0); }
 
@@ -1564,11 +1588,11 @@ function questStat(stat){ return stat==='purchases' ? game.purchases : (game.sta
 const PASS_XP_STEP = 50;                              // xp needed per tier
 function passTierXp(i){ return i*PASS_XP_STEP; }      // tier i (1-based) unlocks at i*50 xp
 // rewards stay modest until the final tier (level-13 pick)
-const PASS_REWARDS = [   // index 0 = tier 1 … index 19 = tier 20
-  {coins:15}, {pick:2},  {coins:20}, {pick:3},  {coins:25},
-  {pick:3},   {coins:30}, {pick:4},  {coins:35}, {pick:4},
-  {coins:40}, {pick:5},  {coins:45}, {pick:5},  {coins:55},
-  {pick:6},   {coins:65}, {pick:6},  {coins:90}, {pick:13},
+const PASS_REWARDS = [   // сезон 2: index 0 = tier 1 … index 19 = tier 20
+  {coins:20}, {pick:3},   {coins:30},  {pick:4},  {coins:40},
+  {pick:4},   {coins:50},  {pick:5},   {coins:60}, {pick:5},
+  {coins:70}, {pick:6},    {coins:80},  {pick:7},  {coins:100},
+  {pick:8},   {coins:120}, {pick:9},   {coins:160}, {pick:13},
 ];
 const PASS_TIERS = PASS_REWARDS.length;              // 20
 
@@ -1606,9 +1630,11 @@ function save(){
       eventCdV:game.eventCdV,
       pending:game.pending,
       gotMagic:game.gotMagic,
+      gotFrost:game.gotFrost,
       tutorialDone:game.tutorialDone,
       tutSeenV:game.tutSeenV,
       seenGamePromo:game.seenGamePromo,
+      seasonV:game.seasonV,
       storeSlots:game.storeSlots,
       store:game.store,
     }));
@@ -1639,9 +1665,11 @@ function load(){
     game.bossHp = (s.bossHp && typeof s.bossHp==='object') ? s.bossHp : {};
     game.pending = Array.isArray(s.pending) ? s.pending.filter(x=>Number.isFinite(x)) : [];
     game.gotMagic = !!s.gotMagic;
+    game.gotFrost = !!s.gotFrost;
     game.tutorialDone = !!s.tutorialDone;
     game.tutSeenV = Number.isFinite(s.tutSeenV) ? s.tutSeenV : 0;
     game.seenGamePromo = Number.isFinite(s.seenGamePromo) ? s.seenGamePromo : 0;
+    game.seasonV = Number.isFinite(s.seasonV) ? s.seasonV : 0;
     game.storeSlots = Number.isFinite(s.storeSlots) ? clamp(s.storeSlots, STORE_START, STORE_MAX) : STORE_START;
     game.store = (Array.isArray(s.store))
       ? s.store.map(c => (c && Number.isFinite(c.level)) ? {level:c.level, uses:(Number.isFinite(c.uses)?clamp(c.uses,0,MAX_USES):MAX_USES)} : null)
@@ -1664,6 +1692,12 @@ function load(){
     // one-time cooldown reset for every player when EVENT_CD_VERSION bumps
     game.eventCdV = Number.isFinite(s.eventCdV) ? s.eventCdV : 0;
     if(game.eventCdV < EVENT_CD_VERSION){ game.event.lastWin = 0; game.eventCdV = EVENT_CD_VERSION; }
+    // one-time NEW-SEASON reset when SEASON_VERSION bumps: everyone starts the pass + quests fresh
+    if(game.seasonV < SEASON_VERSION){
+      game.passXp = 0; game.claimedTiers = []; game.questsSeen = []; game.claimedQuests = [];
+      game.stats = {blocksDug:0, merges:0, levelsWon:0, bossesBeaten:0, maxPickLevel:1, mageWins:0};
+      game.seasonV = SEASON_VERSION;
+    }
     return true;
   }catch(e){ return false; }
 }
@@ -1715,14 +1749,15 @@ function buildGrid(){
 function freeSlots(){ const f=[]; for(let i=0;i<SLOTS;i++) if(!game.grid[i]) f.push(i); return f; }
 
 function makePickEl(level, uses){
-  const isMagic = level===MAGIC_LEVEL;
-  const p=document.createElement('div'); p.className='pick spawn'+(isMagic?' magic':(level>=12?' glow12':''));
+  const kind = limitedKind(level);          // '', 'magic' (acid) or 'frost'
+  const isLimited = !!kind;
+  const p=document.createElement('div'); p.className='pick spawn'+(isLimited?' '+kind:(level>=12?' glow12':''));
   const img=document.createElement('img'); img.src=TEX.picks[level]; img.alt='';
-  const lv=document.createElement('span'); lv.className='lv'; lv.textContent=isMagic?'✦':level;
-  if(isMagic){ const a=document.createElement('div'); a.className='glowAura mag'; p.appendChild(a); }
+  const lv=document.createElement('span'); lv.className='lv'; lv.textContent=isLimited?'✦':level;
+  if(isLimited){ const a=document.createElement('div'); a.className='glowAura '+(kind==='frost'?'frost':'mag'); p.appendChild(a); }
   else if(level>=12){ const a=document.createElement('div'); a.className='glowAura'+(level===12?' el':''); p.appendChild(a); }
   p.appendChild(img); p.appendChild(lv);
-  if(isMagic){
+  if(isLimited){
     const lim=document.createElement('span'); lim.className='limited'; lim.textContent='Limited'; p.appendChild(lim);
   } else {
     const u=(uses==null?MAX_USES:uses);
@@ -2012,8 +2047,9 @@ function makeRunner(laneIdx, levels){
   const restTop=Math.round(-dig.blockH*0.74 + 12);  // sit ON the block, not inside it
   const picks=[];
   levels.forEach((lv,i)=>{
-    const isMagic = lv===MAGIC_LEVEL;
-    const u=document.createElement('div'); u.className='punit'+(isMagic?' magic':(lv>=12?' glow12':''));
+    const kind = limitedKind(lv);          // '', 'magic' (acid) or 'frost'
+    const isLimited = !!kind;
+    const u=document.createElement('div'); u.className='punit'+(isLimited?' '+kind:(lv>=12?' glow12':''));
     u.style.left=(50+(i-(n-1)/2)*16)+'%';     // same size, fanned (overlap ok)
     u.style.top=restTop+'px';
     u.style.zIndex=String(10+i);
@@ -2021,11 +2057,11 @@ function makeRunner(laneIdx, levels){
     q.style.top=(-8-i*7)+'px';                 // stack health bars so each is visible
     const qi=document.createElement('i'); q.appendChild(qi);
     const img=document.createElement('img'); img.src=TEX.picks[lv]; img.alt='';
-    if(isMagic){ const a=document.createElement('div'); a.className='glowAura mag'; u.appendChild(a); }
+    if(isLimited){ const a=document.createElement('div'); a.className='glowAura '+(kind==='frost'?'frost':'mag'); u.appendChild(a); }
     else if(lv>=12){ const a=document.createElement('div'); a.className='glowAura'+(lv===12?' el':''); u.appendChild(a); }
     u.appendChild(q); u.appendChild(img);
     el.appendChild(u);
-    picks.push({level:lv,magic:isMagic,power:pickPower(lv),maxQ:pickMaxQ(lv),
+    picks.push({level:lv,special:kind,power:pickPower(lv),maxQ:pickMaxQ(lv),
                 quality:pickMaxQ(lv),alive:true,el:u,qbar:qi});
   });
   return {lane:laneIdx,row:0,progress:0,finished:false,el,picks,
@@ -2263,10 +2299,12 @@ function onReachGift(run){
 function tick(){
   if(!dig||!game.running) return;
   if(game.mode==='event'){ tickEvent(); return; }        // super-event mage fight
-  // magic pick: its acid corrodes the immediately adjacent lanes (1-block range) → they dig faster
-  const acidLanes=new Set();
+  // event "Limited" picks buff the two adjacent lanes: acid → dig faster, frost → blocks shatter in one hit
+  const acidLanes=new Set(), frostLanes=new Set();
   for(const r of dig.runners){
-    if(!r.finished && !r.fighting && r.picks.some(p=>p.alive && p.magic)){ acidLanes.add(r.lane-1); acidLanes.add(r.lane+1); }
+    if(r.finished || r.fighting) continue;
+    if(r.picks.some(p=>p.alive && p.special==='magic')){ acidLanes.add(r.lane-1); acidLanes.add(r.lane+1); }
+    if(r.picks.some(p=>p.alive && p.special==='frost')){ frostLanes.add(r.lane-1); frostLanes.add(r.lane+1); }
   }
   for(const run of dig.runners){
     if(run.finished) continue;
@@ -2289,7 +2327,8 @@ function tick(){
     if(!b){ run.finished=true; continue; }
     if(b.broken){ run.progress=0; advanceRunner(run); continue; }   // skip cleared blocks
     run.progress += power*run.speed;
-    if(acidLanes.has(run.lane)){ run.progress += power*run.speed*0.9; if(b.el) b.el.classList.add('acided'); }   // green acid → side lane digs faster
+    if(frostLanes.has(run.lane)){ run.progress = Math.max(run.progress, b.hp); if(b.el) b.el.classList.add('frosted'); }   // frozen → shatters in one hit
+    else if(acidLanes.has(run.lane)){ run.progress += power*run.speed*0.9; if(b.el) b.el.classList.add('acided'); }         // green acid → side lane digs faster
     for(const p of alivePicks){
       p.quality-=b.wear;
       if(p.quality<=0){ p.quality=0; killPick(p); if(p.level>=13) explodeAt(run.lane,run.row); }
@@ -2518,8 +2557,12 @@ function onRunFail(){
    ========================================================= */
 function eventAvailableInMs(){ const left=(game.event.lastWin+EVENT_COOLDOWN_MS)-Date.now(); return left>0?left:0; }
 function eventClosed(){ return Date.now()>=EVENT_END_TS; }
+function eventNotStarted(){ return Date.now()<EVENT_START_TS; }         // renewed event hasn't opened yet
+function msUntil(ts){ const d=ts-Date.now(); return d>0?d:0; }
 function fmtDur(ms){ const s=Math.ceil(ms/1000), h=(s/3600|0), m=((s%3600)/60|0), ss=s%60;
   return `${h}ч ${String(m).padStart(2,'0')}м ${String(ss).padStart(2,'0')}с`; }
+function fmtDaysDur(ms){ const s=Math.ceil(ms/1000), d=(s/86400|0), h=((s%86400)/3600|0), m=((s%3600)/60|0);
+  return d>0 ? `${d}д ${h}ч ${String(m).padStart(2,'0')}м` : `${h}ч ${String(m).padStart(2,'0')}м`; }
 function fmtClock(ms){ const s=Math.max(0,Math.ceil(ms/1000)), h=(s/3600|0), m=((s%3600)/60|0), ss=s%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
 
@@ -2529,6 +2572,7 @@ function renderEventBtn(){
   if(eventClosed()){ b.style.display='none'; return; }
   b.style.display='flex';
   const tag=b.querySelector('.evtTag');
+  if(eventNotStarted()){ b.classList.add('locked'); tag.classList.remove('timer'); tag.textContent='СКОРО'; return; }  // teaser before it opens
   if(game.mode==='event'){ b.classList.remove('locked'); tag.classList.remove('timer'); tag.textContent='ВЫЙТИ'; }
   else {
     const left=eventAvailableInMs();
@@ -2539,6 +2583,7 @@ function renderEventBtn(){
 function onEventBtn(){
   if(game.running) return;
   if(game.mode==='event'){ leaveEvent(); return; }
+  if(eventNotStarted()){ openEventModal(); return; }                                             // teaser (can't enter yet)
   if(eventAvailableInMs()>0){ toast('Выигрывать ивент можно только раз в 13 часов'); return; }   // on cooldown
   openEventModal();
 }
@@ -2550,14 +2595,33 @@ function updateTimers(){
 }
 let eventTimerId=null;
 function openEventModal(){
+  const start=$('#eventStart');
+  clearInterval(eventTimerId);
+  // ---- teaser: the renewed event hasn't opened yet ----
+  if(eventNotStarted()){
+    $('#eventInfo').innerHTML=
+      `❄️ Новый ивент уже скоро! В награду — уникальная <b>морозная кирка</b> (Limited): `+
+      `она замораживает соседние линии, и блоки рядом ломаются с одного удара.<br>`+
+      `Старт <b>${EVENT_START}</b> — <span class="evtTimer">через ${fmtDaysDur(msUntil(EVENT_START_TS))}</span>. Идёт до ${EVENT_END}.`;
+    start.disabled=true; start.textContent='СКОРО';
+    openModal('eventModal');
+    eventTimerId=setInterval(()=>{
+      if(!$('#eventModal').classList.contains('show')){ clearInterval(eventTimerId); return; }
+      const u=msUntil(EVENT_START_TS), t=$('#eventInfo .evtTimer');
+      if(u>0){ if(t) t.textContent=`через ${fmtDaysDur(u)}`; }
+      else { closeModal('eventModal'); clearInterval(eventTimerId); }     // just opened → close the teaser
+      renderEventBtn();
+    },1000);
+    return;
+  }
+  // ---- live event ----
   const left=eventAvailableInMs();
-  let html=`Награда: <b>1000</b> монет + кирка <b>12</b> и <b>13</b> уровня.<br>`+
-           `Ивент заканчивается <b>${EVENT_END}</b>. Мага можно одолеть раз в 13 часов.`;
+  let html=`Награда: <b>1000</b> монет + кирки <b>12</b> и <b>13</b> уровня, а за первую победу — ❄️ <b>морозная кирка</b> (Limited)!<br>`+
+           `Ивент идёт до <b>${EVENT_END}</b>. Мага можно одолеть раз в 13 часов.`;
   if(left>0) html+=`<br><span class="evtTimer">Снова доступно через ${fmtDur(left)}</span>`;
   $('#eventInfo').innerHTML=html;
-  const start=$('#eventStart'); start.disabled=left>0; start.textContent=left>0?'НА ПЕРЕЗАРЯДКЕ':'НАЧАТЬ';
+  start.disabled=left>0; start.textContent=left>0?'НА ПЕРЕЗАРЯДКЕ':'НАЧАТЬ';
   openModal('eventModal');
-  clearInterval(eventTimerId);
   eventTimerId=setInterval(()=>{
     if(!$('#eventModal').classList.contains('show')){ clearInterval(eventTimerId); return; }
     const l=eventAvailableInMs(); const t=$('#eventInfo .evtTimer');
@@ -2567,6 +2631,7 @@ function openEventModal(){
   },1000);
 }
 function startEvent(){
+  if(eventNotStarted()) return;               // not open yet
   if(eventAvailableInMs()>0) return;          // on cooldown
   closeModal('eventModal'); clearInterval(eventTimerId);
   enterEvent();
@@ -2581,7 +2646,7 @@ function enterEvent(){
   document.body.classList.add('eventmode');
   $('#eventTopMsg').textContent='Ивент доступен до '+EVENT_END;
   renderAllSlots(); enterEventMenu();
-  renderEventBtn(); playEventMusic();
+  renderEventBtn(); stopLobbyMusic(); playEventMusic();
   toast('Супер ивент! Одолей злого мага.');
   refreshUI();
 }
@@ -2594,7 +2659,7 @@ function leaveEvent(){
   game.coins=N.coins; game.purchases=N.purchases; game.grid=N.grid; game.level=N.level||1;
   game._normal=null;
   document.body.classList.remove('eventmode');
-  stopEventMusic();
+  stopEventMusic(); playLobbyMusic();
   newLevel(game.level); renderAllSlots();
   renderEventBtn(); refreshUI();
 }
@@ -2724,21 +2789,21 @@ function mageDefeated(){
     leaveEvent();                        // back to the normal game…
     game.coins+=EVENT_REWARD.coins;      // …and hand over the prize
     EVENT_REWARD.picks.forEach(lv=>grantPick(lv));   // placed on the field, or queued if it's full
-    const firstMagic = !game.gotMagic;
-    if(firstMagic){ grantPick(MAGIC_LEVEL); game.gotMagic=true; }   // one-time "Limited" magic pick
+    const firstFrost = !game.gotFrost;
+    if(firstFrost){ grantPick(FROST_LEVEL); game.gotFrost=true; }   // one-time season-2 "Limited" frost pick
     renderCoins();
-    showMageBanner(firstMagic);
+    showMageBanner(firstFrost);
     syncQuestXp(false);
     refreshUI();
   }, 1500);
 }
-function showMageBanner(firstMagic){
+function showMageBanner(firstFrost){
   sfxComplete();
   game._mageBanner=true;
   $('#bannerGift').src=TEX.mage;
   $('#bannerTitle').textContent='МАГ ПОВЕРЖЕН!';
   $('#bannerText').innerHTML=`Злой маг разбит! 🎉<br>Награда: <b>+${EVENT_REWARD.coins}</b> монет и кирки <b>12</b> + <b>13</b> уровня.`+
-    (firstMagic?`<br>✦ И уникальная <b>магическая кирка</b> (Limited)!`:``)+
+    (firstFrost?`<br>❄️ И уникальная <b>морозная кирка</b> (Limited)!`:``)+
     `<br>Снова сразиться можно через <b class="evtTimer" id="mageBannerTimer">13ч 00м 00с</b>.`;
   $('#levelTrackLabel').textContent='СУПЕР ИВЕНТ';
   $('#levelLine').innerHTML='';
@@ -2770,6 +2835,8 @@ function sfxMageHit(){           // a percussive thud each time the picks land o
 }
 function playEventMusic(){ const a=$('#eventMusic'); if(!a) return; if(game.soundOn){ a.volume=0.3; a.play().catch(()=>{}); } }
 function stopEventMusic(){ const a=$('#eventMusic'); if(a){ a.pause(); try{a.currentTime=0;}catch(e){} } }
+function playLobbyMusic(){ const a=$('#lobbyMusic'); if(!a) return; if(game.soundOn && game.mode!=='event'){ a.volume=0.14; a.play().catch(()=>{}); } }  // quiet lobby ambience (normal mode only)
+function stopLobbyMusic(){ const a=$('#lobbyMusic'); if(a){ a.pause(); } }
 // remember the highest pick level ever held (for quests)
 function notePick(level){ if(level<=MAX_LEVEL && level>(game.stats.maxPickLevel||1)) game.stats.maxPickLevel=level; }
 
@@ -2922,7 +2989,7 @@ function renderSettings(){
   const s=$('#setSound'); if(s){ s.textContent=game.soundOn?'Вкл':'Выкл'; s.classList.toggle('on',game.soundOn); }
 }
 function toggleTheme(){ game.lightTheme=!game.lightTheme; applyTheme(); renderSettings(); save(); }
-function toggleSound(){ game.soundOn=!game.soundOn; if(game.soundOn){ audioInit(); sfxBuy(); if(game.mode==='event') playEventMusic(); } else { stopEventMusic(); } renderSettings(); save(); }
+function toggleSound(){ game.soundOn=!game.soundOn; if(game.soundOn){ audioInit(); sfxBuy(); if(game.mode==='event') playEventMusic(); else playLobbyMusic(); } else { stopEventMusic(); stopLobbyMusic(); } renderSettings(); save(); }
 
 /* ---- quests ---- */
 function renderQuests(){
@@ -3061,6 +3128,7 @@ function boot(){
   $('#eventBtn').addEventListener('click',onEventBtn);
   $('#eventStart').addEventListener('click',startEvent);
   $('#pendingPick').addEventListener('click',onPendingClick);
+  window.addEventListener('pointerdown', ()=>audioInit(), {once:true});   // first tap anywhere → kick off quiet lobby music
 
   // ---- top-right actions ----
   $('#updatesBtn').addEventListener('click',()=>openModal('updatesModal'));
